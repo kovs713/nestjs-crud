@@ -1,0 +1,44 @@
+name: CI
+
+# specially nothing special
+on:
+  push:
+  pull_request:
+
+# prevent duplicates
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# basic jobs
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Chechout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linter
+        run: pnpm lint
+
+      - name: Run formatter
+        run: pnpm format
+
+      - name: Run unit tests
+        run: pnpm test
+
+      - name: Build application
+        run: pnpm build
