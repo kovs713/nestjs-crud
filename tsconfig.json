@@ -15,14 +15,20 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "@/core/*": [
-        "./src/core/*"
+      "@/auth/*": [
+        "./src/auth/*"
       ],
       "@/common/*": [
         "./src/common/*"
       ],
-      "@/modules/*": [
-        "./src/modules/*"
+      "@/configs/*": [
+        "./src/configs/*"
+      ],
+      "@/features/*": [
+        "./src/features/*"
+      ],
+      "@/providers": [
+        "./src/providers/*"
       ]
     },
     "incremental": true,
