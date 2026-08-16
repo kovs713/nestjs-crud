@@ -7,7 +7,15 @@ import { FeaturesModule } from './features/features.module';
 import { ProvidersModule } from './providers/providers.module';
 
 @Module({
-  imports: [AuthModule, FeaturesModule, ConfigsModule, ProvidersModule],
+  imports: [
+    ConfigsModule.forRoot({
+      isGlobal: true,
+    }),
+    AuthModule,
+    FeaturesModule,
+    ConfigsModule,
+    ProvidersModule,
+  ],
   controllers: [AppController],
   providers: [],
 })
