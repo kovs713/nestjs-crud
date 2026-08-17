@@ -4,8 +4,10 @@ import { validateSync } from 'class-validator';
 export function validateConfig<T extends object>(
   config: Record<string, unknown>,
   envVariableClass: ClassConstructor<T>,
-) {
-  const validatedConfig = plainToClass(envVariableClass, config);
+): T {
+  const validatedConfig = plainToClass(envVariableClass, config, {
+    enableImplicitConversion: true,
+  });
 
   const errors = validateSync(validatedConfig, {
     skipMissingProperties: false,
