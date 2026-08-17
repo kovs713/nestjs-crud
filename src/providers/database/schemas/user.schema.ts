@@ -1,11 +1,10 @@
-import { string } from 'drizzle-orm/cockroach-core';
-import { integer, pgTable, uuid } from 'drizzle-orm/pg-core';
+import { integer, pgTable, uuid, varchar } from 'drizzle-orm/pg-core';
 
 export const userSchema = pgTable('users', {
   id: uuid('id').primaryKey(),
-  login: string('login').unique().notNull(),
-  email: string('email').unique(),
-  password: string('password').notNull(),
+  login: varchar('login').unique().notNull(),
+  email: varchar('email').unique(),
+  password: varchar('password').notNull(),
   age: integer('age'),
-  describtion: string('describtion'),
+  describtion: varchar('describtion'),
 });
