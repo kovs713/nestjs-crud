@@ -24,13 +24,13 @@
       "@/common/*": [
         "./src/common/*"
       ],
-      "@/configs/*": [
-        "./src/configs/*"
+      "@/config/*": [
+        "./src/config/*"
       ],
       "@/features/*": [
         "./src/features/*"
       ],
-      "@/providers": [
+      "@/providers/*": [
         "./src/providers/*"
       ]
     },
