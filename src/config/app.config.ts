@@ -36,8 +36,10 @@ class EnvironmentVariableValidator {
 }
 
 export default registerAs<AppConfig>('app', () => {
+  // jest sets NODE_ENV=test (lowercase); accept any casing.
+  const nodeEnv = (process.env.NODE_ENV ?? '').toUpperCase();
   const validatedConfig = validateConfig(
-    process.env,
+    { ...process.env, NODE_ENV: nodeEnv },
     EnvironmentVariableValidator,
   );
 
