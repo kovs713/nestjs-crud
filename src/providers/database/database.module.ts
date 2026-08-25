@@ -1,31 +1,39 @@
-import { DynamicModule, Module } from '@nestjs/common';
+import { Inject, Module, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
 import { AllConfigType } from '@/config';
+import { DATABASE_CLIENT, DATABASE_POOL } from './database.constants';
 
-@Module({})
-export class DatabaseModule {
-  static forRoot(): DynamicModule {
-    return {
-      module: DatabaseModule,
-      imports: [],
-      providers: [
-        {
-          provide: Symbol('DATABASE_CLIENT'),
-          inject: [ConfigService<AllConfigType>],
-          useFactory: (config: ConfigService<AllConfigType>) => {
-            const pool = new Pool({
-              connectionString: config.getOrThrow('db.url', { infer: true }),
-            });
-            const client = drizzle({ client: pool });
+@Module({
+  providers: [
+    {
+      provide: DATABASE_POOL,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<AllConfigType>): Pool => {
+        const pool = new Pool({
+          connectionString: config.getOrThrow('db.url', { infer: true }),
+        });
 
-            return client;
-          },
-        },
-      ],
-      exports: [],
-    };
+        return pool;
+      },
+    },
+    {
+      provide: DATABASE_CLIENT,
+      inject: [DATABASE_POOL],
+      useFactory: (pool: Pool): NodePgDatabase => {
+        const client = drizzle({ client: pool });
+
+        return client;
+      },
+    },
+  ],
+  exports: [DATABASE_POOL, DATABASE_CLIENT],
+})
+export class DatabaseModule implements OnModuleDestroy {
+  constructor(@Inject(DATABASE_POOL) private readonly pool: Pool) {}
+  async onModuleDestroy() {
+    await this.pool.end();
   }
 }
