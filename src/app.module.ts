@@ -5,7 +5,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import authConfig from './auth/auth.config';
 import { AuthModule } from './auth/auth.module';
-import { IdempotencyInterceptor } from './common/idempotency/idempotency.interceptor';
+import { IdempotencyInterceptor } from './common/idempotency';
 import appConfig from './config/app.config';
 import { FeaturesModule } from './features/features.module';
 import cacheConfig from './providers/cache/cache.config';

@@ -14,7 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 
-import { Idempotent } from '@/common/idempotency/idempotency.decorator';
+import { Idempotent } from '@/common/idempotency';
 import type { RequestWithUser } from '@/common/types';
 import { toUserResponse, UserResponseDto } from '@/features/users/dto';
 import { UsersService } from '@/features/users/users.service';
