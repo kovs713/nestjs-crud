@@ -1,18 +1,18 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
 import { verifyPassword } from '@/common/utils';
-import { AllConfigType } from '@/config';
 import { RawUser } from '@/features/users/types/users.types';
 import { UsersService } from '@/features/users/users.service';
+import { REFRESH_COOKIE } from './auth.constants';
 import { AuthLoginDto, AuthRegisterDto } from './dto';
-import { JwtClaims, JwtPayloadType } from './types';
+import type { JwtClaims, JwtPayloadType, RefreshCookieConfig } from './types';
 
 export type Tokens = {
   accessToken: string;
@@ -24,7 +24,7 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
-    private readonly config: ConfigService<AllConfigType>,
+    @Inject(REFRESH_COOKIE) private readonly cookie: RefreshCookieConfig,
   ) {}
 
   async register(dto: AuthRegisterDto): Promise<Tokens & { user: RawUser }> {
@@ -95,9 +95,7 @@ export class AuthService {
       this.jwtService.signAsync(
         { ...claims, type: 'refresh' },
         {
-          expiresIn: this.config.getOrThrow('auth.refreshTokenMaxAge', {
-            infer: true,
-          }),
+          expiresIn: this.cookie.options.maxAge,
         },
       ),
     ]);
