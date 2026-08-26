@@ -43,29 +43,42 @@ describe('UsersService', () => {
   });
 
   describe('getById', () => {
-    it('should throws NOT_FOUND when the user is missing', async () => {
+    it('should throw NOT_FOUND when the user is missing', async () => {
+      // given
+      //   no user with such id
       repository.findById.mockResolvedValue(null);
 
-      await expect(service.getById('missing')).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      // when
+      const attempt = service.getById('missing');
+
+      // then
+      await expect(attempt).rejects.toBeInstanceOf(NotFoundException);
     });
 
-    it('should returns the user when found', async () => {
+    it('should return the user when found', async () => {
+      // given
       const user = { ...mockUser, id: '1' };
       repository.findById.mockResolvedValue(user);
 
-      await expect(service.getById('1')).resolves.toBe(user);
+      // when
+      const found = await service.getById('1');
+
+      // then
+      expect(found).toBe(user);
     });
   });
 
   describe('delete', () => {
-    it('throws NOT_FOUND when nothing was deleted', async () => {
+    it('should throw NOT_FOUND when nothing was deleted', async () => {
+      // given
+      //   soft-delete matches no row
       repository.softDeleteById.mockResolvedValue(null);
 
-      await expect(service.delete('missing')).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      // when
+      const attempt = service.delete('missing');
+
+      // then
+      await expect(attempt).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 });
