@@ -1,10 +1,14 @@
-import { Module } from '@nestjs/common';
+import { ClassSerializerInterceptor, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 
 import { AppController } from './app.controller';
+import authConfig from './auth/auth.config';
 import { AuthModule } from './auth/auth.module';
+import { IdempotencyInterceptor } from './common/idempotency/idempotency.interceptor';
 import appConfig from './config/app.config';
 import { FeaturesModule } from './features/features.module';
+import cacheConfig from './providers/cache/cache.config';
 import databaseConfig from './providers/database/database.config';
 import { ProvidersModule } from './providers/providers.module';
 
@@ -12,7 +16,7 @@ import { ProvidersModule } from './providers/providers.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig],
+      load: [appConfig, databaseConfig, authConfig, cacheConfig],
       envFilePath: ['.env'],
     }),
     AuthModule,
@@ -20,6 +24,9 @@ import { ProvidersModule } from './providers/providers.module';
     ProvidersModule,
   ],
   controllers: [AppController],
-  providers: [],
+  providers: [
+    { provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: ClassSerializerInterceptor },
+  ],
 })
 export class AppModule {}
