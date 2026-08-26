@@ -1,6 +1,6 @@
 import type { CookieOptions } from 'express';
 
-export type RefreshCookieConfig = {
+export type RefreshTokenConfig = {
   name: string;
   options: CookieOptions;
 };

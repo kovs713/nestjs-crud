@@ -1,12 +1,17 @@
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { UsersService } from '@/features/users/users.service';
+import { REFRESH_TOKEN_CONFIG } from './auth.constants';
 import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
   let service: AuthService;
+
+  const token = {
+    name: 'refresh_token',
+    options: { httpOnly: true },
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -14,7 +19,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: JwtService, useValue: {} },
         { provide: UsersService, useValue: {} },
-        { provide: ConfigService, useValue: { getOrThrow: () => 604800 } },
+        { provide: REFRESH_TOKEN_CONFIG, useValue: token },
       ],
     }).compile();
 

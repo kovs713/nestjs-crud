@@ -5,11 +5,11 @@ import { PassportModule } from '@nestjs/passport';
 
 import { AllConfigType } from '@/config';
 import { UsersModule } from '@/features/users/users.module';
-import { REFRESH_COOKIE } from './auth.constants';
+import { REFRESH_TOKEN_CONFIG } from './auth.constants';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies';
-import { RefreshCookieConfig } from './types';
+import { RefreshTokenConfig } from './types';
 
 @Module({
   imports: [
@@ -29,11 +29,11 @@ import { RefreshCookieConfig } from './types';
     AuthService,
     JwtStrategy,
     {
-      provide: REFRESH_COOKIE,
+      provide: REFRESH_TOKEN_CONFIG,
       inject: [ConfigService],
       useFactory: (
         config: ConfigService<AllConfigType>,
-      ): RefreshCookieConfig => ({
+      ): RefreshTokenConfig => ({
         name: config.getOrThrow<string>('auth.refreshTokenCookie', {
           infer: true,
         }),

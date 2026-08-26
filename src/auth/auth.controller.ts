@@ -18,10 +18,10 @@ import { Idempotent } from '@/common/idempotency';
 import type { RequestWithUser } from '@/common/types';
 import { toUserResponse, UserResponseDto } from '@/features/users/dto';
 import { UsersService } from '@/features/users/users.service';
-import { REFRESH_COOKIE } from './auth.constants';
+import { REFRESH_TOKEN_CONFIG } from './auth.constants';
 import { AuthService } from './auth.service';
 import { AuthLoginDto, AuthRegisterDto, AuthTokensDto } from './dto';
-import type { JwtPayloadType, RefreshCookieConfig } from './types';
+import type { JwtPayloadType, RefreshTokenConfig } from './types';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -29,7 +29,8 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
-    @Inject(REFRESH_COOKIE) private readonly refreshCookie: RefreshCookieConfig,
+    @Inject(REFRESH_TOKEN_CONFIG)
+    private readonly refreshTokenConfig: RefreshTokenConfig,
   ) {}
 
   @Idempotent()
@@ -42,9 +43,9 @@ export class AuthController {
       await this.authService.register(dto);
 
     res.cookie(
-      this.refreshCookie.name,
+      this.refreshTokenConfig.name,
       refreshToken,
-      this.refreshCookie.options,
+      this.refreshTokenConfig.options,
     );
 
     return { accessToken, user: toUserResponse(user) };
@@ -60,9 +61,9 @@ export class AuthController {
       await this.authService.login(dto);
 
     res.cookie(
-      this.refreshCookie.name,
+      this.refreshTokenConfig.name,
       refreshToken,
-      this.refreshCookie.options,
+      this.refreshTokenConfig.options,
     );
 
     return { accessToken, user: toUserResponse(user) };
@@ -75,13 +76,13 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ accessToken: string }> {
     const { accessToken, refreshToken } = await this.authService.refresh(
-      req.cookies?.[this.refreshCookie.name] as string | undefined,
+      req.cookies?.[this.refreshTokenConfig.name] as string | undefined,
     );
 
     res.cookie(
-      this.refreshCookie.name,
+      this.refreshTokenConfig.name,
       refreshToken,
-      this.refreshCookie.options,
+      this.refreshTokenConfig.options,
     );
 
     return { accessToken };
@@ -90,7 +91,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response): void {
-    res.clearCookie(this.refreshCookie.name, this.refreshCookie.options);
+    res.clearCookie(
+      this.refreshTokenConfig.name,
+      this.refreshTokenConfig.options,
+    );
   }
 
   @ApiBearerAuth()

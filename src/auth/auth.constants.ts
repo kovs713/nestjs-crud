@@ -1,1 +1,1 @@
-export const REFRESH_COOKIE = Symbol('REFRESH_COOKIE');
+export const REFRESH_TOKEN_CONFIG = Symbol('REFRESH_TOKEN_CONFIG');

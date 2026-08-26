@@ -10,9 +10,9 @@ import { JwtService } from '@nestjs/jwt';
 import { verifyPassword } from '@/common/utils';
 import { RawUser } from '@/features/users/types/users.types';
 import { UsersService } from '@/features/users/users.service';
-import { REFRESH_COOKIE } from './auth.constants';
+import { REFRESH_TOKEN_CONFIG } from './auth.constants';
 import { AuthLoginDto, AuthRegisterDto } from './dto';
-import type { JwtClaims, JwtPayloadType, RefreshCookieConfig } from './types';
+import type { JwtClaims, JwtPayloadType, RefreshTokenConfig } from './types';
 
 export type Tokens = {
   accessToken: string;
@@ -24,7 +24,8 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
-    @Inject(REFRESH_COOKIE) private readonly cookie: RefreshCookieConfig,
+    @Inject(REFRESH_TOKEN_CONFIG)
+    private readonly refreshTokenConfig: RefreshTokenConfig,
   ) {}
 
   async register(dto: AuthRegisterDto): Promise<Tokens & { user: RawUser }> {
@@ -95,7 +96,7 @@ export class AuthService {
       this.jwtService.signAsync(
         { ...claims, type: 'refresh' },
         {
-          expiresIn: this.cookie.options.maxAge,
+          expiresIn: this.refreshTokenConfig.options.maxAge,
         },
       ),
     ]);
