@@ -1,0 +1,32 @@
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { UsersService } from '@/users/users.service';
+import { REFRESH_TOKEN_CONFIG } from './auth.constants';
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+
+describe('AuthController', () => {
+  let controller: AuthController;
+
+  const token = {
+    name: 'refresh_token',
+    options: { httpOnly: true },
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [AuthController],
+      providers: [
+        { provide: AuthService, useValue: {} },
+        { provide: UsersService, useValue: {} },
+        { provide: REFRESH_TOKEN_CONFIG, useValue: token },
+      ],
+    }).compile();
+
+    controller = module.get<AuthController>(AuthController);
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+});

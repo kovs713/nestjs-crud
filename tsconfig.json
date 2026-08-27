@@ -14,6 +14,29 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@/auth/*": [
+        "./src/auth/*"
+      ],
+      "@/common/*": [
+        "./src/common/*"
+      ],
+      "@/config/*": [
+        "./src/config/*"
+      ],
+      "@/features/*": [
+        "./src/features/*"
+      ],
+      "@/providers/*": [
+        "./src/providers/*"
+      ],
+      "@/test/*": [
+        "./test/*"
+      ]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
