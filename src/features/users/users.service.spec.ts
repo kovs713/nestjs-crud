@@ -45,7 +45,7 @@ describe('UsersService', () => {
   describe('getById', () => {
     it('should throw NOT_FOUND when the user is missing', async () => {
       // given
-      //   no user with such id
+      // :no user with such id
       repository.findById.mockResolvedValue(null);
 
       // when
@@ -71,7 +71,7 @@ describe('UsersService', () => {
   describe('delete', () => {
     it('should throw NOT_FOUND when nothing was deleted', async () => {
       // given
-      //   soft-delete matches no row
+      // :soft-delete matches no row
       repository.softDeleteById.mockResolvedValue(null);
 
       // when

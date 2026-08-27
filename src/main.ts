@@ -33,10 +33,17 @@ async function bootstrap() {
   );
 
   const options = new DocumentBuilder()
-    .setTitle('API')
-    .setDescription('API docs')
+    .setTitle('NestJS CRUD API')
+    .setDescription(
+      'REST API with JWT authentication.\n\n' +
+        '- `auth` endpoints issue access tokens and set an http-only refresh token cookie.\n' +
+        '- `users` endpoints require a bearer access token; write access to other users is admin-only.',
+    )
     .setVersion('1.0')
     .addBearerAuth()
+    .addTag('health', 'Service liveness checks')
+    .addTag('auth', 'Registration, login, token refresh and logout')
+    .addTag('users', 'User CRUD operations')
     .build();
 
   const document = SwaggerModule.createDocument(app, options);
