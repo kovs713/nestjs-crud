@@ -31,6 +31,7 @@ import {
 import { Roles } from '@/auth/decorators';
 import { RolesGuard } from '@/auth/guards';
 import { JwtPayloadType } from '@/auth/types';
+import { Idempotent } from '@/common/idempotency';
 import type { RequestWithUser } from '@/common/types';
 import {
   CreateUserDto,
@@ -145,6 +146,7 @@ export class UsersController {
   }
 
   @Roles('admin')
+  @Idempotent()
   @Post()
   @ApiOperation({
     summary: 'Create a user',
