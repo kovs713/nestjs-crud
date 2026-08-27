@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { UserResponseDto } from '@/features/users/dto';
+import { UserResponseDto } from '@/users/dto';
 
 export class AuthTokensDto {
   /** JWT access token; send it as `Authorization: Bearer <token>`. */

@@ -25,8 +25,8 @@ import type { Request, Response } from 'express';
 
 import { Idempotent } from '@/common/idempotency';
 import type { RequestWithUser } from '@/common/types';
-import { toUserResponse, UserResponseDto } from '@/features/users/dto';
-import { UsersService } from '@/features/users/users.service';
+import { toUserResponse, UserResponseDto } from '@/users/dto';
+import { UsersService } from '@/users/users.service';
 import { REFRESH_TOKEN_CONFIG } from './auth.constants';
 import { AuthService } from './auth.service';
 import { AuthLoginDto, AuthRegisterDto, AuthTokensDto } from './dto';

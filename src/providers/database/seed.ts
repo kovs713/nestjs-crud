@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
 import { hashPassword } from '@/common/utils';
-import { usersEntity } from '@/features/users/entities';
+import { usersEntity } from '@/users/entities';
 
 const ADMIN_LOGIN = process.env.ADMIN_LOGIN ?? 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'admin';

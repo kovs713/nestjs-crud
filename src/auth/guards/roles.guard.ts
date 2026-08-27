@@ -7,7 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 
 import type { RequestWithUser } from '@/common/types';
-import type { UserRole } from '@/features/users/types/users.types';
+import type { UserRole } from '@/users/types/users.types';
 import { ROLES_KEY } from '../decorators';
 import { JwtPayloadType } from '../types';
 

@@ -1,1 +1,1 @@
-export * from '@/features/users/entities';
+export * from '@/users/entities';

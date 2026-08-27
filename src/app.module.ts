@@ -7,10 +7,10 @@ import authConfig from './auth/auth.config';
 import { AuthModule } from './auth/auth.module';
 import { IdempotencyInterceptor } from './common/idempotency';
 import appConfig from './config/app.config';
-import { FeaturesModule } from './features/features.module';
 import cacheConfig from './providers/cache/cache.config';
 import databaseConfig from './providers/database/database.config';
 import { ProvidersModule } from './providers/providers.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -20,7 +20,7 @@ import { ProvidersModule } from './providers/providers.module';
       envFilePath: ['.env'],
     }),
     AuthModule,
-    FeaturesModule,
+    UsersModule,
     ProvidersModule,
   ],
   controllers: [AppController],

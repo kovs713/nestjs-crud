@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { UsersService } from '@/features/users/users.service';
+import { UsersService } from '@/users/users.service';
 import { REFRESH_TOKEN_CONFIG } from './auth.constants';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';

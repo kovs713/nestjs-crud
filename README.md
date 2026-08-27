@@ -33,7 +33,7 @@ pnpm lint && pnpm format
 ```
 src/
   auth/           # jwt strategy, guards, decorators, controller
-  features/users/ # users module (controller, service, repo, dto)
+  users/          # users module (controller, service, repo, dto)
   providers/      # database (drizzle/postgres), cache (redis)
   common/         # idempotency interceptor, shared types, utils
   config/         # env validation

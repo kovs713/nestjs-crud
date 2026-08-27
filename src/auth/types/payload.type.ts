@@ -1,4 +1,4 @@
-import { RawUser } from '@/features/users/types/users.types';
+import { RawUser } from '@/users/types/users.types';
 
 export type TokenType = 'access' | 'refresh';
 

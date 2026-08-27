@@ -8,8 +8,8 @@ import {
 import { JwtService } from '@nestjs/jwt';
 
 import { verifyPassword } from '@/common/utils';
-import { RawUser } from '@/features/users/types/users.types';
-import { UsersService } from '@/features/users/users.service';
+import { RawUser } from '@/users/types/users.types';
+import { UsersService } from '@/users/users.service';
 import { REFRESH_TOKEN_CONFIG } from './auth.constants';
 import { AuthLoginDto, AuthRegisterDto } from './dto';
 import type { JwtClaims, JwtPayloadType, RefreshTokenConfig } from './types';

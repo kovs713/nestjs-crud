@@ -4,7 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
 import { AllConfigType } from '@/config';
-import { UsersModule } from '@/features/users/users.module';
+import { UsersModule } from '@/users/users.module';
 import { REFRESH_TOKEN_CONFIG } from './auth.constants';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
