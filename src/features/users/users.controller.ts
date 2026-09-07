@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   Param,
   ParseUUIDPipe,
@@ -40,6 +39,7 @@ import {
   UpdateUserDto,
   UserResponseDto,
 } from './dto';
+import { SelfOrAdminGuard } from './guards/self-or-admin.guard';
 import { UsersService } from './users.service';
 
 @ApiTags('users')
@@ -166,6 +166,7 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @UseGuards(SelfOrAdminGuard)
   @ApiOperation({
     summary: 'Update a user',
     description:
@@ -187,14 +188,12 @@ export class UsersController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserDto,
-    @Req() req: RequestWithUser<JwtPayloadType>,
   ): Promise<UserResponseDto> {
-    this.assertSelfOrAdmin(req.user, id);
-
     return toUserResponse(await this.service.update(id, dto));
   }
 
   @Delete(':id')
+  @UseGuards(SelfOrAdminGuard)
   @ApiOperation({
     summary: 'Delete a user',
     description:
@@ -218,15 +217,7 @@ export class UsersController {
   })
   async delete(
     @Param('id', ParseUUIDPipe) id: string,
-    @Req() req: RequestWithUser<JwtPayloadType>,
   ): Promise<UserResponseDto> {
-    this.assertSelfOrAdmin(req.user, id);
-
     return toUserResponse(await this.service.delete(id));
-  }
-
-  private assertSelfOrAdmin(actor: JwtPayloadType, id: string): void {
-    if (actor.id !== id && actor.role !== 'admin')
-      throw new ForbiddenException();
   }
 }
