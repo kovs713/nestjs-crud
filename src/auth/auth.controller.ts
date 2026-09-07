@@ -12,30 +12,26 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import {
-  ApiBearerAuth,
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiCookieAuth,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
-  ApiUnauthorizedResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 
 import { Idempotent } from '@/common/idempotency';
 import type { RequestWithUser } from '@/common/types';
-import { toUserResponse, UserResponseDto } from '@/users/dto';
-import { UsersService } from '@/users/users.service';
+import { toUserResponse, UserResponseDto } from '@/features/users/dto';
+import { UsersService } from '@/features/users/users.service';
 import { REFRESH_TOKEN_CONFIG } from './auth.constants';
 import { AuthService } from './auth.service';
 import { AuthLoginDto, AuthRegisterDto, AuthTokensDto } from './dto';
 import type { JwtPayloadType, RefreshTokenConfig } from './types';
 
-/**
- * Refresh token is delivered via an http-only cookie (`refresh_token`).
- * It never appears in request/response bodies.
- */
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
