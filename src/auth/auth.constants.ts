@@ -1,0 +1,1 @@
+export const REFRESH_TOKEN_CONFIG = Symbol('REFRESH_TOKEN_CONFIG');
