@@ -11,6 +11,7 @@ import cacheConfig from './providers/cache/cache.config';
 import databaseConfig from './providers/database/database.config';
 import { ProvidersModule } from './providers/providers.module';
 import { UsersModule } from './users/users.module';
+import { FeaturesModule } from './features/features.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     UsersModule,
     ProvidersModule,
+    FeaturesModule,
   ],
   controllers: [AppController],
   providers: [
