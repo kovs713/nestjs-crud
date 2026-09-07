@@ -33,9 +33,10 @@ pnpm lint && pnpm format
 ```
 src/
   auth/           # jwt strategy, guards, decorators, controller
-  users/          # users module (controller, service, repo, dto)
+  features/       # feature modules (users/)
   providers/      # database (drizzle/postgres), cache (redis)
   common/         # idempotency interceptor, shared types, utils
   config/         # env validation
+  main.ts         # bootstrap
 drizzle/          # sql migrations
 ```
