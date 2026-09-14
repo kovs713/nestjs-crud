@@ -1,6 +1,6 @@
 import type { CookieOptions } from 'express';
 
-export type RefreshTokenConfig = {
+export interface RefreshTokenConfig {
   name: string;
   options: CookieOptions;
-};
+}
