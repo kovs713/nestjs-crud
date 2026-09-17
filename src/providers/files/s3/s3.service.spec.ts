@@ -4,8 +4,8 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { generateFileMock } from './__mocks__/generate-file-mock';
-import { S3_CLIENT, S3_OPTIONS } from './s3.constants';
 import type { S3Config } from './s3.config';
+import { S3_CLIENT, S3_OPTIONS } from './s3.constants';
 import { S3Service } from './s3.service';
 
 jest.mock('@aws-sdk/s3-request-presigner', () => ({
@@ -41,19 +41,18 @@ describe('S3Service', () => {
   });
 
   describe('uploadFile', () => {
-    it('puts object under folder/name and returns path', async () => {
+    it('puts object under folder/name', async () => {
       // given
       // :s3 send resolves
 
       // when
-      const uploaded = await service.uploadFile({
+      await service.uploadFile({
         file: generateFileMock(),
         folder: 'avatars',
         name: 'a.jpg',
       });
 
       // then
-      expect(uploaded).toEqual({ path: 'avatars/a.jpg' });
       expect(s3.send.mock.calls[0][0].input).toMatchObject({
         Bucket: 'test-bucket',
         Key: 'avatars/a.jpg',
@@ -80,7 +79,7 @@ describe('S3Service', () => {
   describe('deleteFile', () => {
     it('deletes by key', async () => {
       // when
-      await service.deleteFile({ key: 'avatars/a.jpg' });
+      await service.deleteFile('avatars/a.jpg');
 
       // then
       expect(s3.send.mock.calls[0][0].input).toMatchObject({
@@ -96,10 +95,10 @@ describe('S3Service', () => {
       mockedGetSignedUrl.mockResolvedValueOnce('https://s3/a.jpg');
 
       // when
-      const result = await service.readFile({ key: 'avatars/a.jpg' });
+      const result = await service.readFile('avatars/a.jpg');
 
       // then
-      expect(result).toEqual({ presignedUrl: 'https://s3/a.jpg' });
+      expect(result).toEqual('https://s3/a.jpg');
     });
   });
 });

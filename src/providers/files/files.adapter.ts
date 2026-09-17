@@ -1,15 +1,9 @@
-import {
-  DeleteFileDto,
-  ReadFileDto,
-  ReadFileResponseDto,
-  UploadFileDto,
-  UploadFileResponseDto,
-} from './s3/dto';
+import { UploadFileDto } from './s3/dto';
 
 export abstract class IFileService {
-  abstract uploadFile(dto: UploadFileDto): Promise<UploadFileResponseDto>;
+  abstract uploadFile(dto: UploadFileDto): Promise<void>;
 
-  abstract deleteFile(dto: DeleteFileDto): Promise<void>;
+  abstract deleteFile(key: string): Promise<void>;
 
-  abstract readFile(dto: ReadFileDto): Promise<ReadFileResponseDto>;
+  abstract readFile(key: string): Promise<string>;
 }

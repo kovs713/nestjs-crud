@@ -8,13 +8,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { IFileService } from '../files.adapter';
-import {
-  DeleteFileDto,
-  ReadFileDto,
-  ReadFileResponseDto,
-  UploadFileDto,
-  UploadFileResponseDto,
-} from './dto';
+import { UploadFileDto } from './dto';
 import { handleS3Error } from './exceptions';
 import type { S3Config } from './s3.config';
 import { S3_CLIENT, S3_OPTIONS } from './s3.constants';
@@ -28,7 +22,7 @@ export class S3Service implements IFileService {
     @Inject(S3_OPTIONS) private readonly s3Config: S3Config,
   ) {}
 
-  async uploadFile(dto: UploadFileDto): Promise<UploadFileResponseDto> {
+  async uploadFile(dto: UploadFileDto): Promise<void> {
     const { file, folder, name } = dto;
     const key = `${folder}/${name}`;
 
@@ -46,16 +40,12 @@ export class S3Service implements IFileService {
       await this.s3Client.send(command);
 
       this.logger.log(`Succesfully uploaded: ${key}`);
-
-      return { path: key };
     } catch (error: unknown) {
       handleS3Error(error, 'upload file', this.logger);
     }
   }
 
-  async deleteFile(dto: DeleteFileDto): Promise<void> {
-    const { key } = dto;
-
+  async deleteFile(key: string): Promise<void> {
     const command = new DeleteObjectCommand({
       Bucket: this.s3Config.bucketName,
       Key: key,
@@ -72,9 +62,7 @@ export class S3Service implements IFileService {
     }
   }
 
-  async readFile(dto: ReadFileDto): Promise<ReadFileResponseDto> {
-    const { key } = dto;
-
+  async readFile(key: string): Promise<string> {
     const command = new GetObjectCommand({
       Bucket: this.s3Config.bucketName,
       Key: key,
@@ -89,7 +77,7 @@ export class S3Service implements IFileService {
 
       this.logger.log(`Succesfully get presigned url: ${key}`);
 
-      return { presignedUrl };
+      return presignedUrl;
     } catch (error: unknown) {
       handleS3Error(error, 'get presigned url', this.logger);
     }
