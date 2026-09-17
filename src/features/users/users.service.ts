@@ -96,6 +96,8 @@ export class UsersService {
     userId: string,
     file: IUploadedMulterFile,
   ): Promise<string> {
+    await this.getById(userId);
+
     const name = `${randomUUID()}${extname(file.originalname).toLowerCase()}`;
 
     await this.s3Service.uploadFile({ file, folder: 'avatars', name });
