@@ -43,6 +43,7 @@ import type { IUploadedMulterFile } from '@/providers/files/s3/interfaces';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   CreateUserDto,
+  SearchActiveUsersDto,
   SearchUsersDto,
   toUserResponse,
   UpdateUserDto,
@@ -114,6 +115,40 @@ export class UsersController {
   })
   async searchByBody(@Body() dto: SearchUsersDto): Promise<UserResponseDto[]> {
     const users = await this.service.search(dto);
+    return users.map(toUserResponse);
+  }
+
+  @Get('active')
+  @ApiOperation({
+    summary: 'Search active users',
+    description:
+      'Returns users with more than 2 avatars and a description, optionally filtered by an inclusive age range, paginated. Requires authentication.',
+  })
+  @ApiQuery({
+    name: 'minAge',
+    required: false,
+    type: Number,
+    example: 18,
+    description: 'Minimum age, inclusive',
+  })
+  @ApiQuery({
+    name: 'maxAge',
+    required: false,
+    type: Number,
+    example: 99,
+    description: 'Maximum age, inclusive',
+  })
+  @ApiOkResponse({
+    type: [UserResponseDto],
+    description: 'List of matching users (may be empty)',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid or expired access token',
+  })
+  async searchActive(
+    @Query() dto: SearchActiveUsersDto,
+  ): Promise<UserResponseDto[]> {
+    const users = await this.service.searchActive(dto);
     return users.map(toUserResponse);
   }
 

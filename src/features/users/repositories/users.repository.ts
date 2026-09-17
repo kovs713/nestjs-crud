@@ -1,10 +1,22 @@
 import { ConflictException, Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, gt, ilike, isNull, sql } from 'drizzle-orm';
+import {
+  and,
+  desc,
+  eq,
+  gt,
+  gte,
+  ilike,
+  isNotNull,
+  isNull,
+  lte,
+  ne,
+  sql,
+} from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { isUniqueViolation } from '@/providers/database/database-errors.util';
 import { DATABASE_CLIENT } from '@/providers/database/database.constants';
-import { SearchUsersDto } from '../dto';
+import { SearchActiveUsersDto, SearchUsersDto } from '../dto';
 import { avatars, users } from '../entities';
 import {
   InsertAvatar,
@@ -33,6 +45,30 @@ export class UsersRepository {
       .select()
       .from(users)
       .where(where)
+      .orderBy(users.createdAt)
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async findActiveUsers({
+    minAge,
+    maxAge,
+    limit,
+    offset,
+  }: SearchActiveUsersDto): Promise<RawUser[]> {
+    return this.db
+      .select()
+      .from(users)
+      .where(
+        and(
+          notDeleted,
+          gt(users.avatarsCount, 2),
+          isNotNull(users.description),
+          ne(users.description, ''),
+          minAge !== undefined ? gte(users.age, minAge) : undefined,
+          maxAge !== undefined ? lte(users.age, maxAge) : undefined,
+        ),
+      )
       .orderBy(users.createdAt)
       .limit(limit)
       .offset(offset);

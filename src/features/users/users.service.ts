@@ -9,6 +9,7 @@ import { IUploadedMulterFile } from '@/providers/files/s3/interfaces';
 import {
   AvatarResponseDto,
   CreateUserDto,
+  SearchActiveUsersDto,
   SearchUsersDto,
   UpdateUserDto,
 } from './dto';
@@ -24,6 +25,10 @@ export class UsersService {
 
   async search(dto: SearchUsersDto): Promise<RawUser[]> {
     return this.repository.searchUser(dto);
+  }
+
+  async searchActive(dto: SearchActiveUsersDto): Promise<RawUser[]> {
+    return this.repository.findActiveUsers(dto);
   }
 
   async getById(id: string): Promise<RawUser> {
