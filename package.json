@@ -20,9 +20,9 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:integration": "jest --config ./test/jest-integration.json --runInBand",
-    "db:generate": "node --env-file=.env node_modules/.bin/drizzle-kit generate",
-    "db:migrate": "node --env-file=.env node_modules/.bin/drizzle-kit migrate",
-    "db:push": "node --env-file=.env node_modules/.bin/drizzle-kit push",
+    "db:generate": "node --env-file=.env node_modules/drizzle-kit/bin.cjs generate",
+    "db:migrate": "node --env-file=.env node_modules/drizzle-kit/bin.cjs migrate",
+    "db:push": "node --env-file=.env node_modules/drizzle-kit/bin.cjs push",
     "db:seed": "node --env-file=.env --import tsx src/providers/database/seed.ts",
     "prepare": "husky install"
   },
