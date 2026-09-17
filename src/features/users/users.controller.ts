@@ -21,6 +21,8 @@ import { AuthGuard } from '@nestjs/passport';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
@@ -176,6 +178,25 @@ export class UsersController {
   @Patch('avatars')
   @UseInterceptors(FileInterceptor('file'))
   @Idempotent()
+  @ApiOperation({
+    summary: 'Upload an avatar',
+    description:
+      'Uploads an image (jpeg/png/webp, up to 5 MB) as a new avatar of the currently authenticated user. Returns the new avatar id.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiOkResponse({ type: String, description: 'Id of the created avatar' })
+  @ApiBadRequestResponse({
+    description: 'Missing file, too large, or not an image',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid or expired access token',
+  })
   async uploadAvatar(
     @Req() req: RequestWithUser<JwtPayloadType>,
     @UploadedFile(
@@ -248,6 +269,18 @@ export class UsersController {
   }
 
   @Get('profile/avatars/my')
+  @ApiOperation({
+    summary: 'List own avatars',
+    description:
+      'Returns the avatars of the currently authenticated user with presigned view urls.',
+  })
+  @ApiOkResponse({
+    type: [AvatarResponseDto],
+    description: 'Own avatars (may be empty)',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid or expired access token',
+  })
   async getMyProfileAvatars(
     @Req() req: RequestWithUser<JwtPayloadType>,
   ): Promise<AvatarResponseDto[]> {
@@ -255,6 +288,23 @@ export class UsersController {
   }
 
   @Get('profile/avatars/:userId')
+  @ApiOperation({
+    summary: "List a user's avatars",
+    description:
+      'Returns the avatars of the given user with presigned view urls. Requires authentication.',
+  })
+  @ApiParam({
+    name: 'userId',
+    format: 'uuid',
+    description: 'UUID of the user whose avatars to fetch',
+  })
+  @ApiOkResponse({
+    type: [AvatarResponseDto],
+    description: "User's avatars (may be empty)",
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid or expired access token',
+  })
   async getProfileAvatars(
     @Param('userId', ParseUUIDPipe) userId: string,
   ): Promise<AvatarResponseDto[]> {
@@ -262,6 +312,21 @@ export class UsersController {
   }
 
   @Get('avatars/:avatarId')
+  @ApiOperation({
+    summary: 'Get an avatar',
+    description:
+      'Returns a single avatar with a presigned view url. Requires authentication.',
+  })
+  @ApiParam({
+    name: 'avatarId',
+    format: 'uuid',
+    description: 'UUID of the avatar to fetch',
+  })
+  @ApiOkResponse({ type: AvatarResponseDto, description: 'Requested avatar' })
+  @ApiNotFoundResponse({ description: 'No avatar exists with the given id' })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid or expired access token',
+  })
   async getAvatar(
     @Param('avatarId', ParseUUIDPipe) avatarId: string,
   ): Promise<AvatarResponseDto> {
@@ -269,6 +334,24 @@ export class UsersController {
   }
 
   @Delete('avatars/:avatarId')
+  @ApiOperation({
+    summary: 'Delete an avatar',
+    description:
+      'Deletes an avatar (database row and stored file). Users may delete their own avatars, admins may delete anyone.',
+  })
+  @ApiParam({
+    name: 'avatarId',
+    format: 'uuid',
+    description: 'UUID of the avatar to delete',
+  })
+  @ApiOkResponse({ description: 'Avatar deleted' })
+  @ApiNotFoundResponse({
+    description:
+      'No avatar exists with the given id or it belongs to someone else',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid or expired access token',
+  })
   async deleteAvatar(
     @Param('avatarId', ParseUUIDPipe) avatarId: string,
     @Req() req: RequestWithUser<JwtPayloadType>,
