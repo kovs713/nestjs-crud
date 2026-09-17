@@ -1,4 +1,4 @@
-import { IUploadedMulterFile } from '../interfaces/uploaded-multer-file.interface';
+import { IUploadedMulterFile } from '../interfaces';
 
 export function generateFileMock(size = 1024 * 1024): IUploadedMulterFile {
   return {

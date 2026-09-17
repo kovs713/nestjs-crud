@@ -8,12 +8,14 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { IFileService } from '../files.adapter';
-import { DeleteFileDto } from './dto/delete-file.dto';
-import { ReadFileResponseDto } from './dto/read-file-response.dto';
-import { ReadFileDto } from './dto/read-file.dto';
-import { UploadFileResponseDto } from './dto/upload-file-response.dto';
-import { UploadFileDto } from './dto/upload-file.dto';
-import { handleS3Error } from './exceptions/handle-errors.util';
+import {
+  DeleteFileDto,
+  ReadFileDto,
+  ReadFileResponseDto,
+  UploadFileDto,
+  UploadFileResponseDto,
+} from './dto';
+import { handleS3Error } from './exceptions';
 import type { S3Config } from './s3.config';
 import { S3_CLIENT, S3_OPTIONS } from './s3.constants';
 
