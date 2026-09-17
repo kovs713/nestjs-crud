@@ -13,6 +13,7 @@ export const avatars = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   (table) => [index('avatars_users_id_idx').on(table.userId)],
 );
