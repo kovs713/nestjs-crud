@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -21,6 +22,8 @@ export type Tokens = {
 
 @Injectable()
 export class AuthService {
+  private readonly logger: Logger = new Logger(AuthService.name);
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
@@ -29,31 +32,46 @@ export class AuthService {
   ) {}
 
   async register(dto: AuthRegisterDto): Promise<Tokens & { user: RawUser }> {
+    this.logger.log(`Registering user: ${dto.login}`);
+
     const user = await this.usersService.create({ ...dto, role: 'user' });
+
+    this.logger.log(`Successfully registered: ${user.id}`);
 
     return { ...(await this.issueTokens(user)), user };
   }
 
   async login(dto: AuthLoginDto): Promise<Tokens & { user: RawUser }> {
+    this.logger.log(`Login attempt: ${dto.login ?? dto.email}`);
+
     const user = await this.validate(dto);
+
+    this.logger.log(`Successfully logged in: ${user.id}`);
 
     return { ...(await this.issueTokens(user)), user };
   }
 
   async refresh(token: string | undefined): Promise<Tokens> {
-    if (!token) throw new UnauthorizedException('Missing refresh token');
+    if (!token) {
+      this.logger.warn('Missing refresh token');
+      throw new UnauthorizedException('Missing refresh token');
+    }
 
     let payload: JwtPayloadType;
 
     try {
       payload = await this.jwtService.verifyAsync<JwtPayloadType>(token);
     } catch {
+      this.logger.warn('Invalid refresh token');
       throw new UnauthorizedException('Invalid refresh token');
     }
 
     if (payload.type !== 'refresh') {
+      this.logger.warn('Invalid refresh token');
       throw new UnauthorizedException('Invalid refresh token');
     }
+
+    this.logger.log(`Refreshing tokens: ${payload.id}`);
 
     const user = await this.usersService.getById(payload.id);
 
@@ -64,6 +82,7 @@ export class AuthService {
     const user = await this.findUser(dto);
 
     if (!(await verifyPassword(dto.password, user.passwordHash))) {
+      this.logger.warn(`Invalid credentials: ${user.id}`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -81,6 +100,7 @@ export class AuthService {
         : await this.usersService.getByEmail(dto.email);
     } catch (error) {
       if (error instanceof NotFoundException) {
+        this.logger.warn(`Invalid credentials: ${dto.login ?? dto.email}`);
         throw new UnauthorizedException('Invalid credentials');
       }
 

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { hashPassword } from '@/common/utils';
 import { IFileService } from '@/providers/files/files.adapter';
@@ -18,6 +18,8 @@ import { InsertUser, RawUser, UpdateUser } from './types/users.types';
 
 @Injectable()
 export class UsersService {
+  private readonly logger: Logger = new Logger(UsersService.name);
+
   constructor(
     private readonly repository: UsersRepository,
     private readonly s3Service: IFileService,
@@ -34,7 +36,10 @@ export class UsersService {
   async getById(id: string): Promise<RawUser> {
     const user = await this.repository.findById(id);
 
-    if (!user) throw new NotFoundException(`user ${id} not found`);
+    if (!user) {
+      this.logger.warn(`User not found: ${id}`);
+      throw new NotFoundException(`user ${id} not found`);
+    }
 
     return user;
   }
@@ -56,6 +61,8 @@ export class UsersService {
   }
 
   async create(dto: CreateUserDto): Promise<RawUser> {
+    this.logger.log(`Creating user: ${dto.login}`);
+
     const userData: InsertUser = {
       login: dto.login,
       passwordHash: await hashPassword(dto.password),
@@ -65,10 +72,16 @@ export class UsersService {
       description: dto.description,
     };
 
-    return this.repository.createUser(userData);
+    const user = await this.repository.createUser(userData);
+
+    this.logger.log(`Successfully created: ${user.id}`);
+
+    return user;
   }
 
   async update(id: string, dto: UpdateUserDto): Promise<RawUser> {
+    this.logger.log(`Updating user: ${id}`);
+
     const { password, ...rest } = dto;
 
     const userData: UpdateUser = {
@@ -79,15 +92,27 @@ export class UsersService {
     };
 
     const user = await this.repository.updateUserById(id, userData);
-    if (!user) throw new NotFoundException(`user ${id} not found`);
+    if (!user) {
+      this.logger.warn(`User not found: ${id}`);
+      throw new NotFoundException(`user ${id} not found`);
+    }
+
+    this.logger.log(`Successfully updated: ${id}`);
 
     return user;
   }
 
   async delete(id: string): Promise<RawUser> {
+    this.logger.log(`Deleting user: ${id}`);
+
     const user = await this.repository.softDeleteUserById(id);
 
-    if (!user) throw new NotFoundException(`user ${id} not found`);
+    if (!user) {
+      this.logger.warn(`User not found: ${id}`);
+      throw new NotFoundException(`user ${id} not found`);
+    }
+
+    this.logger.log(`Successfully deleted: ${id}`);
 
     return user;
   }
@@ -96,6 +121,8 @@ export class UsersService {
     userId: string,
     file: IUploadedMulterFile,
   ): Promise<string> {
+    this.logger.log(`Uploading avatar for user: ${userId}`);
+
     await this.getById(userId);
 
     const name = `${randomUUID()}${extname(file.originalname).toLowerCase()}`;
@@ -105,6 +132,8 @@ export class UsersService {
       userId,
       path: `avatars/${name}`,
     });
+
+    this.logger.log(`Successfully uploaded avatar: ${avatar.id}`);
 
     return avatar.id;
   }
@@ -123,7 +152,10 @@ export class UsersService {
   async getAvatar(avatarId: string): Promise<AvatarResponseDto> {
     const avatar = await this.repository.findAvatarById(avatarId);
 
-    if (!avatar) throw new NotFoundException(`avatar ${avatarId} not found`);
+    if (!avatar) {
+      this.logger.warn(`Avatar not found: ${avatarId}`);
+      throw new NotFoundException(`avatar ${avatarId} not found`);
+    }
 
     return {
       id: avatar.id,
@@ -136,15 +168,20 @@ export class UsersService {
     isAdmin: boolean,
     avatarId: string,
   ): Promise<void> {
+    this.logger.log(`Deleting avatar: ${avatarId}`);
+
     const deletedAvatar = await this.repository.deleteAvatarByIdAndUserId(
       avatarId,
       isAdmin ? null : userId,
     );
 
     if (!deletedAvatar) {
+      this.logger.warn(`Avatar not found: ${avatarId}`);
       throw new NotFoundException(`avatar ${avatarId} not found`);
     }
 
     await this.s3Service.deleteFile(deletedAvatar.path);
+
+    this.logger.log(`Successfully deleted avatar: ${avatarId}`);
   }
 }
