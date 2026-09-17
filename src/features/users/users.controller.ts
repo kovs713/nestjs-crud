@@ -372,7 +372,7 @@ export class UsersController {
   @ApiOperation({
     summary: 'Delete an avatar',
     description:
-      'Deletes an avatar (database row and stored file). Users may delete their own avatars, admins may delete anyone.',
+      'Soft-deletes an avatar, retaining its database row and stored file. Users may delete their own avatars, admins may delete anyone.',
   })
   @ApiParam({
     name: 'avatarId',

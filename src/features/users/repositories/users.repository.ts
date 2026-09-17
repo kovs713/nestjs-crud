@@ -27,6 +27,7 @@ import {
 } from '../types';
 
 const notDeleted = isNull(users.deletedAt);
+const avatarNotDeleted = isNull(avatars.deletedAt);
 
 @Injectable()
 export class UsersRepository {
@@ -148,7 +149,7 @@ export class UsersRepository {
     const [avatar] = await this.db
       .select()
       .from(avatars)
-      .where(eq(avatars.id, id));
+      .where(and(eq(avatars.id, id), avatarNotDeleted));
 
     return avatar ?? null;
   }
@@ -157,7 +158,7 @@ export class UsersRepository {
     return this.db
       .select()
       .from(avatars)
-      .where(eq(avatars.userId, userId))
+      .where(and(eq(avatars.userId, userId), avatarNotDeleted))
       .orderBy(desc(avatars.createdAt));
   }
 
@@ -173,17 +174,22 @@ export class UsersRepository {
     });
   }
 
-  async deleteAvatarByIdAndUserId(
+  async softDeleteAvatarByIdAndUserId(
     avatarId: string,
     userId: string | null,
   ): Promise<RawAvatar | null> {
     return this.db.transaction(async (tx) => {
       const whereCondition = userId
-        ? and(eq(avatars.id, avatarId), eq(avatars.userId, userId))
-        : eq(avatars.id, avatarId);
+        ? and(
+            eq(avatars.id, avatarId),
+            eq(avatars.userId, userId),
+            avatarNotDeleted,
+          )
+        : and(eq(avatars.id, avatarId), avatarNotDeleted);
 
       const [avatar] = await tx
-        .delete(avatars)
+        .update(avatars)
+        .set({ deletedAt: new Date() })
         .where(whereCondition)
         .returning();
 

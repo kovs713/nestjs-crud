@@ -170,7 +170,7 @@ export class UsersService {
   ): Promise<void> {
     this.logger.log(`Deleting avatar: ${avatarId}`);
 
-    const deletedAvatar = await this.repository.deleteAvatarByIdAndUserId(
+    const deletedAvatar = await this.repository.softDeleteAvatarByIdAndUserId(
       avatarId,
       isAdmin ? null : userId,
     );
@@ -179,8 +179,6 @@ export class UsersService {
       this.logger.warn(`Avatar not found: ${avatarId}`);
       throw new NotFoundException(`avatar ${avatarId} not found`);
     }
-
-    await this.s3Service.deleteFile(deletedAvatar.path);
 
     this.logger.log(`Successfully deleted avatar: ${avatarId}`);
   }
