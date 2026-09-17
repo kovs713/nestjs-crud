@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 
 import { hashPassword } from '@/common/utils';
 import { users } from '@/features/users/entities';
+import { relations } from '@/features/users/entities/relations';
 
 const ADMIN_LOGIN = process.env.ADMIN_LOGIN ?? 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'admin';
@@ -10,7 +11,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || null;
 
 async function seed() {
   const pool = new Pool({ connectionString: process.env.DB_URL });
-  const db = drizzle({ client: pool });
+  const db = drizzle({ client: pool, relations: relations });
 
   try {
     const [admin] = await db
