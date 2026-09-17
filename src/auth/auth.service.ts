@@ -8,7 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 
 import { verifyPassword } from '@/common/utils';
-import { RawUser } from '@/features/users/types/users.types';
+import { RawUser } from '@/features/users/types';
 import { UsersService } from '@/features/users/users.service';
 import { REFRESH_TOKEN_CONFIG } from './auth.constants';
 import { AuthLoginDto, AuthRegisterDto } from './dto';
