@@ -1,5 +1,5 @@
 import { ConflictException, Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, ilike, isNull } from 'drizzle-orm';
+import { and, desc, eq, gt, ilike, isNull, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { isUniqueViolation } from '@/providers/database/database-errors.util';
@@ -117,7 +117,7 @@ export class UsersRepository {
     return avatar ?? null;
   }
 
-  async findAvatarByUserId(userId: string): Promise<RawAvatar[]> {
+  async findAvatarsByUserId(userId: string): Promise<RawAvatar[]> {
     return this.db
       .select()
       .from(avatars)
@@ -126,17 +126,39 @@ export class UsersRepository {
   }
 
   async createAvatar(data: InsertAvatar): Promise<RawAvatar> {
-    const [avatar] = await this.db.insert(avatars).values(data).returning();
+    return this.db.transaction(async (tx) => {
+      const [avatar] = await tx.insert(avatars).values(data).returning();
+      await tx
+        .update(users)
+        .set({ avatarsCount: sql`${users.avatarsCount} + 1` })
+        .where(eq(users.id, data.userId));
 
-    return avatar;
+      return avatar;
+    });
   }
 
-  async deleteAvatarById(avatarId: string): Promise<RawAvatar | null> {
-    const [avatar] = await this.db
-      .delete(avatars)
-      .where(eq(avatars.id, avatarId))
-      .returning();
+  async deleteAvatarByIdAndUserId(
+    avatarId: string,
+    userId: string | null,
+  ): Promise<RawAvatar | null> {
+    return this.db.transaction(async (tx) => {
+      const whereCondition = userId
+        ? and(eq(avatars.id, avatarId), eq(avatars.userId, userId))
+        : eq(avatars.id, avatarId);
 
-    return avatar ?? null;
+      const [avatar] = await tx
+        .delete(avatars)
+        .where(whereCondition)
+        .returning();
+
+      if (!avatar) return null;
+
+      await tx
+        .update(users)
+        .set({ avatarsCount: sql`${users.avatarsCount} - 1` })
+        .where(and(eq(users.id, avatar.userId), gt(users.avatarsCount, 0)));
+
+      return avatar;
+    });
   }
 }

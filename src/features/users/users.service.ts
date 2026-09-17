@@ -18,16 +18,16 @@ import { InsertUser, RawUser, UpdateUser } from './types/users.types';
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly users: UsersRepository,
+    private readonly repository: UsersRepository,
     private readonly s3Service: IFileService,
   ) {}
 
   async search(dto: SearchUsersDto): Promise<RawUser[]> {
-    return this.users.searchUser(dto);
+    return this.repository.searchUser(dto);
   }
 
   async getById(id: string): Promise<RawUser> {
-    const user = await this.users.findById(id);
+    const user = await this.repository.findById(id);
 
     if (!user) throw new NotFoundException(`user ${id} not found`);
 
@@ -35,7 +35,7 @@ export class UsersService {
   }
 
   async getByLogin(login: string): Promise<RawUser> {
-    const user = await this.users.findUserByLogin(login);
+    const user = await this.repository.findUserByLogin(login);
 
     if (!user) throw new NotFoundException('user not found');
 
@@ -43,7 +43,7 @@ export class UsersService {
   }
 
   async getByEmail(email: string): Promise<RawUser> {
-    const user = await this.users.findUserByEmail(email);
+    const user = await this.repository.findUserByEmail(email);
 
     if (!user) throw new NotFoundException('user not found');
 
@@ -60,7 +60,7 @@ export class UsersService {
       description: dto.description,
     };
 
-    return this.users.createUser(userData);
+    return this.repository.createUser(userData);
   }
 
   async update(id: string, dto: UpdateUserDto): Promise<RawUser> {
@@ -73,14 +73,14 @@ export class UsersService {
       }),
     };
 
-    const user = await this.users.updateUserById(id, userData);
+    const user = await this.repository.updateUserById(id, userData);
     if (!user) throw new NotFoundException(`user ${id} not found`);
 
     return user;
   }
 
   async delete(id: string): Promise<RawUser> {
-    const user = await this.users.softDeleteUserById(id);
+    const user = await this.repository.softDeleteUserById(id);
 
     if (!user) throw new NotFoundException(`user ${id} not found`);
 
@@ -94,7 +94,7 @@ export class UsersService {
     const name = `${randomUUID()}${extname(file.originalname).toLowerCase()}`;
 
     await this.s3Service.uploadFile({ file, folder: 'avatars', name });
-    const avatar = await this.users.createAvatar({
+    const avatar = await this.repository.createAvatar({
       userId,
       path: `avatars/${name}`,
     });
@@ -103,7 +103,7 @@ export class UsersService {
   }
 
   async getUserAvatarUrls(userId: string): Promise<AvatarResponseDto[]> {
-    const rows = await this.users.findAvatarByUserId(userId);
+    const rows = await this.repository.findAvatarsByUserId(userId);
 
     return Promise.all(
       rows.map(async (row) => ({
@@ -114,7 +114,7 @@ export class UsersService {
   }
 
   async getAvatar(avatarId: string): Promise<AvatarResponseDto> {
-    const avatar = await this.users.findAvatarById(avatarId);
+    const avatar = await this.repository.findAvatarById(avatarId);
 
     if (!avatar) throw new NotFoundException(`avatar ${avatarId} not found`);
 
@@ -129,12 +129,15 @@ export class UsersService {
     isAdmin: boolean,
     avatarId: string,
   ): Promise<void> {
-    const avatar = await this.users.findAvatarById(avatarId);
+    const deletedAvatar = await this.repository.deleteAvatarByIdAndUserId(
+      avatarId,
+      isAdmin ? null : userId,
+    );
 
-    if (!avatar || (avatar.userId !== userId && !isAdmin))
+    if (!deletedAvatar) {
       throw new NotFoundException(`avatar ${avatarId} not found`);
+    }
 
-    await this.users.deleteAvatarById(avatarId);
-    await this.s3Service.deleteFile(avatar.path);
+    await this.s3Service.deleteFile(deletedAvatar.path);
   }
 }
