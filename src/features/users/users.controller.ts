@@ -2,15 +2,20 @@ import {
   Body,
   Controller,
   Delete,
+  FileTypeValidator,
   Get,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   ParseUUIDPipe,
   Patch,
   Post,
   Query,
   QueryMethod,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import {
@@ -32,6 +37,8 @@ import { RolesGuard } from '@/auth/guards';
 import { JwtPayloadType } from '@/auth/types';
 import { Idempotent } from '@/common/idempotency';
 import type { RequestWithUser } from '@/common/types';
+import type { IUploadedMulterFile } from '@/providers/files/s3/interfaces';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   CreateUserDto,
   SearchUsersDto,
@@ -39,6 +46,7 @@ import {
   UpdateUserDto,
   UserResponseDto,
 } from './dto';
+import { AvatarResponseDto } from './dto/avatar-response.dto';
 import { SelfOrAdminGuard } from './guards/self-or-admin.guard';
 import { UsersService } from './users.service';
 
@@ -165,6 +173,24 @@ export class UsersController {
     return toUserResponse(await this.service.create(dto));
   }
 
+  @Patch('avatars')
+  @UseInterceptors(FileInterceptor('file'))
+  @Idempotent()
+  async uploadAvatar(
+    @Req() req: RequestWithUser<JwtPayloadType>,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /^image\/(jpeg|png|webp)$/ }),
+        ],
+      }),
+    )
+    file: IUploadedMulterFile,
+  ): Promise<string> {
+    return await this.service.uploadAvatar(req.user.id, file);
+  }
+
   @Patch(':id')
   @UseGuards(SelfOrAdminGuard)
   @ApiOperation({
@@ -219,5 +245,38 @@ export class UsersController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<UserResponseDto> {
     return toUserResponse(await this.service.delete(id));
+  }
+
+  @Get('profile/avatars/my')
+  async getMyProfileAvatars(
+    @Req() req: RequestWithUser<JwtPayloadType>,
+  ): Promise<AvatarResponseDto[]> {
+    return await this.service.getUserAvatarUrls(req.user.id);
+  }
+
+  @Get('profile/avatars/:userId')
+  async getProfileAvatars(
+    @Param('userId', ParseUUIDPipe) userId: string,
+  ): Promise<AvatarResponseDto[]> {
+    return await this.service.getUserAvatarUrls(userId);
+  }
+
+  @Get('avatars/:avatarId')
+  async getAvatar(
+    @Param('avatarId', ParseUUIDPipe) avatarId: string,
+  ): Promise<AvatarResponseDto> {
+    return await this.service.getAvatar(avatarId);
+  }
+
+  @Delete('avatars/:avatarId')
+  async deleteAvatar(
+    @Param('avatarId', ParseUUIDPipe) avatarId: string,
+    @Req() req: RequestWithUser<JwtPayloadType>,
+  ): Promise<void> {
+    return await this.service.deleteAvatar(
+      req.user.id,
+      req.user.role === 'admin',
+      avatarId,
+    );
   }
 }

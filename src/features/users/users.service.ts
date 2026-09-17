@@ -1,13 +1,27 @@
+import { randomUUID } from 'node:crypto';
+import { extname } from 'node:path';
+
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { hashPassword } from '@/common/utils';
-import { CreateUserDto, SearchUsersDto, UpdateUserDto } from './dto';
-import { UsersRepository } from './repositories/users.repository';
+import { IFileService } from '@/providers/files/files.adapter';
+import { IUploadedMulterFile } from '@/providers/files/s3/interfaces';
+import {
+  AvatarResponseDto,
+  CreateUserDto,
+  SearchUsersDto,
+  UpdateUserDto,
+} from './dto';
+import { AvatarRepository, UsersRepository } from './repositories';
 import { InsertUser, RawUser, UpdateUser } from './types/users.types';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly repository: UsersRepository) {}
+  constructor(
+    private readonly repository: UsersRepository,
+    private readonly avatars: AvatarRepository,
+    private readonly s3Service: IFileService,
+  ) {}
 
   async search(dto: SearchUsersDto): Promise<RawUser[]> {
     return this.repository.search(dto);
@@ -72,5 +86,56 @@ export class UsersService {
     if (!user) throw new NotFoundException(`user ${id} not found`);
 
     return user;
+  }
+
+  async uploadAvatar(
+    userId: string,
+    file: IUploadedMulterFile,
+  ): Promise<string> {
+    const name = `${randomUUID()}${extname(file.originalname).toLowerCase()}`;
+
+    await this.s3Service.uploadFile({ file, folder: 'avatars', name });
+    const avatar = await this.avatars.create({
+      userId,
+      path: `avatars/${name}`,
+    });
+
+    return avatar.id;
+  }
+
+  async getUserAvatarUrls(userId: string): Promise<AvatarResponseDto[]> {
+    const rows = await this.avatars.findByUserId(userId);
+
+    return Promise.all(
+      rows.map(async (row) => ({
+        id: row.id,
+        presignedUrl: await this.s3Service.readFile(row.path),
+      })),
+    );
+  }
+
+  async getAvatar(avatarId: string): Promise<AvatarResponseDto> {
+    const avatar = await this.avatars.findById(avatarId);
+
+    if (!avatar) throw new NotFoundException(`avatar ${avatarId} not found`);
+
+    return {
+      id: avatar.id,
+      presignedUrl: await this.s3Service.readFile(avatar.path),
+    };
+  }
+
+  async deleteAvatar(
+    userId: string,
+    isAdmin: boolean,
+    avatarId: string,
+  ): Promise<void> {
+    const avatar = await this.avatars.findById(avatarId);
+
+    if (!avatar || (avatar.userId !== userId && !isAdmin))
+      throw new NotFoundException(`avatar ${avatarId} not found`);
+
+    await this.avatars.deleteById(avatarId);
+    await this.s3Service.deleteFile(avatar.path);
   }
 }
