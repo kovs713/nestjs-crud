@@ -105,4 +105,138 @@ describe('UsersRepository (integration)', () => {
     // :...but still physically there
     expect(rawRows).toHaveLength(1);
   });
+
+  it('should bump avatars_count on avatar create', async () => {
+    // given
+    const created = await repository.createUser(baseUser);
+
+    // when
+    await repository.createAvatar({
+      userId: created.id,
+      path: 'avatars/1.jpg',
+    });
+    await repository.createAvatar({
+      userId: created.id,
+      path: 'avatars/2.jpg',
+    });
+
+    // then
+    const found = await repository.findById(created.id);
+    expect(found?.avatarsCount).toBe(2);
+  });
+
+  it('should drop avatars_count on avatar delete', async () => {
+    // given
+    // :user with two avatars
+    const created = await repository.createUser(baseUser);
+    await repository.createAvatar({
+      userId: created.id,
+      path: 'avatars/1.jpg',
+    });
+    const doomed = await repository.createAvatar({
+      userId: created.id,
+      path: 'avatars/2.jpg',
+    });
+
+    // when
+    const deleted = await repository.deleteAvatarByIdAndUserId(
+      doomed.id,
+      created.id,
+    );
+
+    // then
+    expect(deleted?.id).toBe(doomed.id);
+    const found = await repository.findById(created.id);
+    expect(found?.avatarsCount).toBe(1);
+  });
+
+  it('should leave the count alone when deleting a missing avatar', async () => {
+    // given
+    const created = await repository.createUser(baseUser);
+    await repository.createAvatar({
+      userId: created.id,
+      path: 'avatars/1.jpg',
+    });
+
+    // when
+    const deleted = await repository.deleteAvatarByIdAndUserId(
+      '00000000-0000-0000-0000-000000000000',
+      created.id,
+    );
+
+    // then
+    expect(deleted).toBeNull();
+    const found = await repository.findById(created.id);
+    expect(found?.avatarsCount).toBe(1);
+  });
+
+  it('should find only active users in the age range', async () => {
+    // given
+    const active = await repository.createUser({ ...baseUser, age: 25 });
+    for (let i = 0; i < 3; i++)
+      await repository.createAvatar({
+        userId: active.id,
+        path: `avatars/a${i}.jpg`,
+      });
+
+    const fewAvatars = await repository.createUser({
+      ...baseUser,
+      login: 'few',
+      email: 'few@example.com',
+      age: 25,
+    });
+    await repository.createAvatar({
+      userId: fewAvatars.id,
+      path: 'avatars/f.jpg',
+    });
+
+    const noDesc = await repository.createUser({
+      ...baseUser,
+      login: 'nodesc',
+      email: 'nodesc@example.com',
+      age: 25,
+      description: null,
+    });
+    for (let i = 0; i < 3; i++)
+      await repository.createAvatar({
+        userId: noDesc.id,
+        path: `avatars/n${i}.jpg`,
+      });
+
+    const old = await repository.createUser({
+      ...baseUser,
+      login: 'old',
+      email: 'old@example.com',
+      age: 60,
+    });
+    for (let i = 0; i < 3; i++)
+      await repository.createAvatar({
+        userId: old.id,
+        path: `avatars/o${i}.jpg`,
+      });
+
+    const gone = await repository.createUser({
+      ...baseUser,
+      login: 'gone',
+      email: 'gone@example.com',
+      age: 25,
+    });
+    for (let i = 0; i < 3; i++)
+      await repository.createAvatar({
+        userId: gone.id,
+        path: `avatars/g${i}.jpg`,
+      });
+    await repository.softDeleteUserById(gone.id);
+
+    // when
+    const found = await repository.findActiveUsers({
+      minAge: 20,
+      maxAge: 30,
+      limit: 20,
+      offset: 0,
+    });
+
+    // then
+    expect(found.map((user) => user.id)).toEqual([active.id]);
+  });
 });
