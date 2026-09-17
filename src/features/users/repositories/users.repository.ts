@@ -5,7 +5,7 @@ import { DatabaseError } from 'pg';
 
 import { DATABASE_CLIENT } from '@/providers/database/database.constants';
 import { SearchUsersDto } from '../dto';
-import { usersEntity } from '../entities';
+import { users } from '../entities';
 import { InsertUser, RawUser, UpdateUser } from '../types/users.types';
 
 // postgresql error code
@@ -19,7 +19,7 @@ function isUniqueViolation(error: unknown): boolean {
   );
 }
 
-const notDeleted = isNull(usersEntity.deletedAt);
+const notDeleted = isNull(users.deletedAt);
 
 @Injectable()
 export class UsersRepository {
@@ -27,14 +27,14 @@ export class UsersRepository {
 
   async search({ login, limit, offset }: SearchUsersDto): Promise<RawUser[]> {
     const where = login
-      ? and(notDeleted, ilike(usersEntity.login, `%${login}%`))
+      ? and(notDeleted, ilike(users.login, `%${login}%`))
       : notDeleted;
 
     return this.db
       .select()
-      .from(usersEntity)
+      .from(users)
       .where(where)
-      .orderBy(usersEntity.createdAt)
+      .orderBy(users.createdAt)
       .limit(limit)
       .offset(offset);
   }
@@ -42,8 +42,8 @@ export class UsersRepository {
   async findById(id: string): Promise<RawUser | null> {
     const user = await this.db
       .select()
-      .from(usersEntity)
-      .where(and(eq(usersEntity.id, id), notDeleted));
+      .from(users)
+      .where(and(eq(users.id, id), notDeleted));
 
     return user[0] ?? null;
   }
@@ -51,8 +51,8 @@ export class UsersRepository {
   async findByLogin(login: string): Promise<RawUser | null> {
     const user = await this.db
       .select()
-      .from(usersEntity)
-      .where(and(eq(usersEntity.login, login), notDeleted));
+      .from(users)
+      .where(and(eq(users.login, login), notDeleted));
 
     return user[0] ?? null;
   }
@@ -60,18 +60,15 @@ export class UsersRepository {
   async findByEmail(email: string): Promise<RawUser | null> {
     const user = await this.db
       .select()
-      .from(usersEntity)
-      .where(and(eq(usersEntity.email, email), notDeleted));
+      .from(users)
+      .where(and(eq(users.email, email), notDeleted));
 
     return user[0] ?? null;
   }
 
   async create(userData: InsertUser): Promise<RawUser> {
     try {
-      const [user] = await this.db
-        .insert(usersEntity)
-        .values(userData)
-        .returning();
+      const [user] = await this.db.insert(users).values(userData).returning();
 
       return user;
     } catch (error) {
@@ -85,9 +82,9 @@ export class UsersRepository {
   async updateById(id: string, userData: UpdateUser): Promise<RawUser | null> {
     try {
       const [user] = await this.db
-        .update(usersEntity)
+        .update(users)
         .set({ ...userData, updatedAt: new Date() })
-        .where(and(eq(usersEntity.id, id), notDeleted))
+        .where(and(eq(users.id, id), notDeleted))
         .returning();
 
       return user ?? null;
@@ -101,9 +98,9 @@ export class UsersRepository {
 
   async softDeleteById(id: string): Promise<RawUser | null> {
     const [user] = await this.db
-      .update(usersEntity)
+      .update(users)
       .set({ deletedAt: new Date() })
-      .where(and(eq(usersEntity.id, id), notDeleted))
+      .where(and(eq(users.id, id), notDeleted))
       .returning();
 
     return user ?? null;

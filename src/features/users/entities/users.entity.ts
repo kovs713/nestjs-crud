@@ -10,7 +10,7 @@ import {
 
 export const usersRole = pgEnum('role', ['user', 'admin']);
 
-export const usersEntity = pgTable('users', {
+export const users = pgTable('users', {
   id: uuid('user_id').defaultRandom().primaryKey(),
   login: varchar('login').unique().notNull(),
   passwordHash: varchar('password_hash').notNull(),

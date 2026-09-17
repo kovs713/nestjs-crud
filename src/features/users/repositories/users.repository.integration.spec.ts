@@ -1,7 +1,7 @@
 import { ConflictException } from '@nestjs/common';
 
 import { TestDatabase } from '@/test/setup';
-import { usersEntity } from '../entities/users.entity';
+import { users } from '../entities/users.entity';
 import { InsertUser } from '../types/users.types';
 import { UsersRepository } from './users.repository';
 
@@ -97,7 +97,7 @@ describe('UsersRepository (integration)', () => {
 
     // when
     const found = await repository.findById(created.id);
-    const rawRows = await testDb.db.select().from(usersEntity);
+    const rawRows = await testDb.db.select().from(users);
 
     // then
     // :hidden behind the notDeleted filter...
