@@ -2,7 +2,9 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { UsersRepository } from './repositories';
+import { IFileService } from '@/providers/files/files.adapter';
+
+import { AvatarRepository, UsersRepository } from './repositories';
 import { RawUser } from './types/users.types';
 import { UsersService } from './users.service';
 
@@ -30,6 +32,14 @@ describe('UsersService', () => {
         {
           provide: UsersRepository,
           useValue: createMock<UsersRepository>(),
+        },
+        {
+          provide: AvatarRepository,
+          useValue: createMock<AvatarRepository>(),
+        },
+        {
+          provide: IFileService,
+          useValue: createMock<IFileService>(),
         },
       ],
     }).compile();

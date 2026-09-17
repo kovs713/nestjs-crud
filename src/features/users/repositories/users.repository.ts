@@ -1,23 +1,12 @@
 import { ConflictException, Inject, Injectable } from '@nestjs/common';
-import { and, DrizzleQueryError, eq, ilike, isNull } from 'drizzle-orm';
+import { and, eq, ilike, isNull } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { DatabaseError } from 'pg';
 
+import { isUniqueViolation } from '@/providers/database/database-errors.util';
 import { DATABASE_CLIENT } from '@/providers/database/database.constants';
 import { SearchUsersDto } from '../dto';
 import { users } from '../entities';
-import { InsertUser, RawUser, UpdateUser } from '../types/users.types';
-
-// postgresql error code
-const UNIQUE_VIOLATION = '23505';
-
-function isUniqueViolation(error: unknown): boolean {
-  return (
-    error instanceof DrizzleQueryError &&
-    error.cause instanceof DatabaseError &&
-    error.cause.code === UNIQUE_VIOLATION
-  );
-}
+import { InsertUser, RawUser, UpdateUser } from '../types';
 
 const notDeleted = isNull(users.deletedAt);
 
