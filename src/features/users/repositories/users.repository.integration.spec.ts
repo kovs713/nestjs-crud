@@ -1,7 +1,7 @@
 import { ConflictException } from '@nestjs/common';
 
 import { TestDatabase } from '@/test/setup';
-import { users } from '../entities/users.entity';
+import { avatars, users } from '../entities';
 import { InsertUser } from '../types/users.types';
 import { UsersRepository } from './users.repository';
 
@@ -125,7 +125,7 @@ describe('UsersRepository (integration)', () => {
     expect(found?.avatarsCount).toBe(2);
   });
 
-  it('should drop avatars_count on avatar delete', async () => {
+  it('should hide a soft-deleted avatar, retain its row and decrement once', async () => {
     // given
     // :user with two avatars
     const created = await repository.createUser(baseUser);
@@ -139,13 +139,30 @@ describe('UsersRepository (integration)', () => {
     });
 
     // when
-    const deleted = await repository.deleteAvatarByIdAndUserId(
+    const deleted = await repository.softDeleteAvatarByIdAndUserId(
       doomed.id,
       created.id,
     );
 
     // then
     expect(deleted?.id).toBe(doomed.id);
+    expect(deleted?.deletedAt).toBeInstanceOf(Date);
+    expect(await repository.findAvatarById(doomed.id)).toBeNull();
+    const visible = await repository.findAvatarsByUserId(created.id);
+    expect(visible).toHaveLength(1);
+    expect(visible[0].path).toBe('avatars/1.jpg');
+    expect(visible[0].deletedAt).toBeNull();
+    expect(await repository.findAvatarById(visible[0].id)).toEqual(visible[0]);
+    const rows = await testDb.db.select().from(avatars);
+    expect(rows).toHaveLength(2);
+    expect(rows.find((row) => row.id === doomed.id)?.deletedAt).toEqual(
+      deleted?.deletedAt,
+    );
+    for (const userId of [created.id, null]) {
+      expect(
+        await repository.softDeleteAvatarByIdAndUserId(doomed.id, userId),
+      ).toBeNull();
+    }
     const found = await repository.findById(created.id);
     expect(found?.avatarsCount).toBe(1);
   });
@@ -159,7 +176,7 @@ describe('UsersRepository (integration)', () => {
     });
 
     // when
-    const deleted = await repository.deleteAvatarByIdAndUserId(
+    const deleted = await repository.softDeleteAvatarByIdAndUserId(
       '00000000-0000-0000-0000-000000000000',
       created.id,
     );
@@ -168,6 +185,30 @@ describe('UsersRepository (integration)', () => {
     expect(deleted).toBeNull();
     const found = await repository.findById(created.id);
     expect(found?.avatarsCount).toBe(1);
+  });
+
+  it('should reject non-owner deletion but allow admin deletion', async () => {
+    const owner = await repository.createUser(baseUser);
+    const avatar = await repository.createAvatar({
+      userId: owner.id,
+      path: 'avatars/1.jpg',
+    });
+
+    expect(
+      await repository.softDeleteAvatarByIdAndUserId(
+        avatar.id,
+        '00000000-0000-0000-0000-000000000000',
+      ),
+    ).toBeNull();
+    expect((await repository.findById(owner.id))?.avatarsCount).toBe(1);
+    expect(await repository.findAvatarById(avatar.id)).toEqual(avatar);
+
+    const deleted = await repository.softDeleteAvatarByIdAndUserId(
+      avatar.id,
+      null,
+    );
+    expect(deleted?.deletedAt).toBeInstanceOf(Date);
+    expect((await repository.findById(owner.id))?.avatarsCount).toBe(0);
   });
 
   it('should find only active users in the age range', async () => {
@@ -238,5 +279,17 @@ describe('UsersRepository (integration)', () => {
 
     // then
     expect(found.map((user) => user.id)).toEqual([active.id]);
+
+    const [avatar] = await repository.findAvatarsByUserId(active.id);
+    await repository.softDeleteAvatarByIdAndUserId(avatar.id, active.id);
+    expect((await repository.findById(active.id))?.avatarsCount).toBe(2);
+    expect(
+      await repository.findActiveUsers({
+        minAge: 20,
+        maxAge: 30,
+        limit: 20,
+        offset: 0,
+      }),
+    ).toEqual([]);
   });
 });
