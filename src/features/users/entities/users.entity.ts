@@ -19,6 +19,7 @@ export const users = pgTable('users', {
   email: varchar('email').unique(),
   age: integer('age'),
   description: text('description'),
+  avatarsCount: integer('avatars_count').notNull().default(0),
 
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()

@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { IFileService } from '@/providers/files/files.adapter';
 
-import { AvatarRepository, UsersRepository } from './repositories';
+import { UsersRepository } from './repositories';
 import { RawUser } from './types/users.types';
 import { UsersService } from './users.service';
 
@@ -20,6 +20,7 @@ describe('UsersService', () => {
     role: 'user',
     age: 10,
     description: 'user',
+    avatarsCount: 0,
     createdAt: new Date(Date.now()),
     updatedAt: new Date(Date.now()),
     deletedAt: null,
@@ -32,10 +33,6 @@ describe('UsersService', () => {
         {
           provide: UsersRepository,
           useValue: createMock<UsersRepository>(),
-        },
-        {
-          provide: AvatarRepository,
-          useValue: createMock<AvatarRepository>(),
         },
         {
           provide: IFileService,
@@ -82,7 +79,7 @@ describe('UsersService', () => {
     it('should throw NOT_FOUND when nothing was deleted', async () => {
       // given
       // :soft-delete matches no row
-      repository.softDeleteById.mockResolvedValue(null);
+      repository.softDeleteUserById.mockResolvedValue(null);
 
       // when
       const attempt = service.delete('missing');

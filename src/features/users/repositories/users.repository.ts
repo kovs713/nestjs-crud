@@ -1,12 +1,18 @@
 import { ConflictException, Inject, Injectable } from '@nestjs/common';
-import { and, eq, ilike, isNull } from 'drizzle-orm';
+import { and, desc, eq, ilike, isNull } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { isUniqueViolation } from '@/providers/database/database-errors.util';
 import { DATABASE_CLIENT } from '@/providers/database/database.constants';
 import { SearchUsersDto } from '../dto';
-import { users } from '../entities';
-import { InsertUser, RawUser, UpdateUser } from '../types';
+import { avatars, users } from '../entities';
+import {
+  InsertAvatar,
+  InsertUser,
+  RawAvatar,
+  RawUser,
+  UpdateUser,
+} from '../types';
 
 const notDeleted = isNull(users.deletedAt);
 
@@ -14,7 +20,11 @@ const notDeleted = isNull(users.deletedAt);
 export class UsersRepository {
   constructor(@Inject(DATABASE_CLIENT) private readonly db: NodePgDatabase) {}
 
-  async search({ login, limit, offset }: SearchUsersDto): Promise<RawUser[]> {
+  async searchUser({
+    login,
+    limit,
+    offset,
+  }: SearchUsersDto): Promise<RawUser[]> {
     const where = login
       ? and(notDeleted, ilike(users.login, `%${login}%`))
       : notDeleted;
@@ -37,7 +47,7 @@ export class UsersRepository {
     return user[0] ?? null;
   }
 
-  async findByLogin(login: string): Promise<RawUser | null> {
+  async findUserByLogin(login: string): Promise<RawUser | null> {
     const user = await this.db
       .select()
       .from(users)
@@ -46,7 +56,7 @@ export class UsersRepository {
     return user[0] ?? null;
   }
 
-  async findByEmail(email: string): Promise<RawUser | null> {
+  async findUserByEmail(email: string): Promise<RawUser | null> {
     const user = await this.db
       .select()
       .from(users)
@@ -55,7 +65,7 @@ export class UsersRepository {
     return user[0] ?? null;
   }
 
-  async create(userData: InsertUser): Promise<RawUser> {
+  async createUser(userData: InsertUser): Promise<RawUser> {
     try {
       const [user] = await this.db.insert(users).values(userData).returning();
 
@@ -68,7 +78,10 @@ export class UsersRepository {
     }
   }
 
-  async updateById(id: string, userData: UpdateUser): Promise<RawUser | null> {
+  async updateUserById(
+    id: string,
+    userData: UpdateUser,
+  ): Promise<RawUser | null> {
     try {
       const [user] = await this.db
         .update(users)
@@ -85,7 +98,7 @@ export class UsersRepository {
     }
   }
 
-  async softDeleteById(id: string): Promise<RawUser | null> {
+  async softDeleteUserById(id: string): Promise<RawUser | null> {
     const [user] = await this.db
       .update(users)
       .set({ deletedAt: new Date() })
@@ -93,5 +106,37 @@ export class UsersRepository {
       .returning();
 
     return user ?? null;
+  }
+
+  async findAvatarById(id: string): Promise<RawAvatar | null> {
+    const [avatar] = await this.db
+      .select()
+      .from(avatars)
+      .where(eq(avatars.id, id));
+
+    return avatar ?? null;
+  }
+
+  async findAvatarByUserId(userId: string): Promise<RawAvatar[]> {
+    return this.db
+      .select()
+      .from(avatars)
+      .where(eq(avatars.userId, userId))
+      .orderBy(desc(avatars.createdAt));
+  }
+
+  async createAvatar(data: InsertAvatar): Promise<RawAvatar> {
+    const [avatar] = await this.db.insert(avatars).values(data).returning();
+
+    return avatar;
+  }
+
+  async deleteAvatarById(avatarId: string): Promise<RawAvatar | null> {
+    const [avatar] = await this.db
+      .delete(avatars)
+      .where(eq(avatars.id, avatarId))
+      .returning();
+
+    return avatar ?? null;
   }
 }

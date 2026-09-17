@@ -33,7 +33,7 @@ describe('UsersRepository (integration)', () => {
     const user = { ...baseUser };
 
     // when
-    const created = await repository.create(user);
+    const created = await repository.createUser(user);
 
     // then
     expect(created.id).toBeDefined();
@@ -44,10 +44,10 @@ describe('UsersRepository (integration)', () => {
 
   it('should find a created user by login', async () => {
     // given
-    const created = await repository.create(baseUser);
+    const created = await repository.createUser(baseUser);
 
     // when
-    const found = await repository.findByLogin(created.login);
+    const found = await repository.findUserByLogin(created.login);
 
     // then
     expect(found?.id).toBe(created.id);
@@ -56,10 +56,10 @@ describe('UsersRepository (integration)', () => {
   it('should reject a duplicate login with a conflict', async () => {
     // given
     // :john already exists
-    await repository.create(baseUser);
+    await repository.createUser(baseUser);
 
     // when
-    const attempt = repository.create(baseUser);
+    const attempt = repository.createUser(baseUser);
 
     // then
     await expect(attempt).rejects.toBeInstanceOf(ConflictException);
@@ -80,10 +80,10 @@ describe('UsersRepository (integration)', () => {
 
   it('should set deleted_at on soft-delete', async () => {
     // given
-    const created = await repository.create(baseUser);
+    const created = await repository.createUser(baseUser);
 
     // when
-    const deleted = await repository.softDeleteById(created.id);
+    const deleted = await repository.softDeleteUserById(created.id);
 
     // then
     expect(deleted?.deletedAt).toBeInstanceOf(Date);
@@ -92,8 +92,8 @@ describe('UsersRepository (integration)', () => {
   it('should hide soft-deleted users from reads but keep the row', async () => {
     // given
     // :soft-deleted user
-    const created = await repository.create(baseUser);
-    await repository.softDeleteById(created.id);
+    const created = await repository.createUser(baseUser);
+    await repository.softDeleteUserById(created.id);
 
     // when
     const found = await repository.findById(created.id);
