@@ -33,6 +33,8 @@ const avatarNotDeleted = isNull(avatars.deletedAt);
 export class UsersRepository {
   constructor(@Inject(DATABASE_CLIENT) private readonly db: NodePgDatabase) {}
 
+  // Users
+
   async searchUser({
     login,
     limit,
@@ -46,30 +48,6 @@ export class UsersRepository {
       .select()
       .from(users)
       .where(where)
-      .orderBy(users.createdAt)
-      .limit(limit)
-      .offset(offset);
-  }
-
-  async findActiveUsers({
-    minAge,
-    maxAge,
-    limit,
-    offset,
-  }: SearchActiveUsersDto): Promise<RawUser[]> {
-    return this.db
-      .select()
-      .from(users)
-      .where(
-        and(
-          notDeleted,
-          gt(users.avatarsCount, 2),
-          isNotNull(users.description),
-          ne(users.description, ''),
-          minAge !== undefined ? gte(users.age, minAge) : undefined,
-          maxAge !== undefined ? lte(users.age, maxAge) : undefined,
-        ),
-      )
       .orderBy(users.createdAt)
       .limit(limit)
       .offset(offset);
@@ -144,6 +122,32 @@ export class UsersRepository {
 
     return user ?? null;
   }
+
+  async findActiveUsers({
+    minAge,
+    maxAge,
+    limit,
+    offset,
+  }: SearchActiveUsersDto): Promise<RawUser[]> {
+    return this.db
+      .select()
+      .from(users)
+      .where(
+        and(
+          notDeleted,
+          gt(users.avatarsCount, 2),
+          isNotNull(users.description),
+          ne(users.description, ''),
+          minAge !== undefined ? gte(users.age, minAge) : undefined,
+          maxAge !== undefined ? lte(users.age, maxAge) : undefined,
+        ),
+      )
+      .orderBy(users.createdAt)
+      .limit(limit)
+      .offset(offset);
+  }
+
+  // Avatar
 
   async findAvatarById(id: string): Promise<RawAvatar | null> {
     const [avatar] = await this.db

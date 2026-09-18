@@ -60,7 +60,8 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly service: UsersService) {}
 
-  // "backward compatibility"
+  // Users
+
   @Get()
   @ApiOperation({
     summary: 'Search users (query string)',
@@ -99,7 +100,6 @@ export class UsersController {
     return users.map(toUserResponse);
   }
 
-  // new http query method
   @QueryMethod()
   @ApiOperation({
     summary: 'Search users (request body)',
@@ -116,56 +116,6 @@ export class UsersController {
   async searchByBody(@Body() dto: SearchUsersDto): Promise<UserResponseDto[]> {
     const users = await this.service.search(dto);
     return users.map(toUserResponse);
-  }
-
-  @Get('active')
-  @ApiOperation({
-    summary: 'Search active users',
-    description:
-      'Returns users with more than 2 avatars and a description, optionally filtered by an inclusive age range, paginated. Requires authentication.',
-  })
-  @ApiQuery({
-    name: 'minAge',
-    required: false,
-    type: Number,
-    example: 18,
-    description: 'Minimum age, inclusive',
-  })
-  @ApiQuery({
-    name: 'maxAge',
-    required: false,
-    type: Number,
-    example: 99,
-    description: 'Maximum age, inclusive',
-  })
-  @ApiOkResponse({
-    type: [UserResponseDto],
-    description: 'List of matching users (may be empty)',
-  })
-  @ApiUnauthorizedResponse({
-    description: 'Missing, invalid or expired access token',
-  })
-  async searchActive(
-    @Query() dto: SearchActiveUsersDto,
-  ): Promise<UserResponseDto[]> {
-    const users = await this.service.searchActive(dto);
-    return users.map(toUserResponse);
-  }
-
-  @Get('profile/my')
-  @ApiOperation({
-    summary: 'Get own profile',
-    description:
-      'Returns the profile of the currently authenticated user. Equivalent to `GET /auth/me`.',
-  })
-  @ApiOkResponse({ type: UserResponseDto, description: 'Own profile' })
-  @ApiUnauthorizedResponse({
-    description: 'Missing, invalid or expired access token',
-  })
-  async getMy(
-    @Req() req: RequestWithUser<JwtPayloadType>,
-  ): Promise<UserResponseDto> {
-    return toUserResponse(await this.service.getById(req.user.id));
   }
 
   @Get(':id')
@@ -188,63 +138,6 @@ export class UsersController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<UserResponseDto> {
     return toUserResponse(await this.service.getById(id));
-  }
-
-  @Roles('admin')
-  @Idempotent()
-  @Post()
-  @ApiOperation({
-    summary: 'Create a user',
-    description:
-      'Creates a user with any role, including `admin`. Admin only. The password is stored hashed and never returned.',
-  })
-  @ApiCreatedResponse({ type: UserResponseDto, description: 'Created user' })
-  @ApiBadRequestResponse({
-    description: 'Validation failed (e.g. duplicate login/email)',
-  })
-  @ApiForbiddenResponse({ description: 'Caller is not an admin' })
-  @ApiUnauthorizedResponse({
-    description: 'Missing, invalid or expired access token',
-  })
-  async create(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
-    return toUserResponse(await this.service.create(dto));
-  }
-
-  @Patch('avatars')
-  @UseInterceptors(FileInterceptor('file'))
-  @Idempotent()
-  @ApiOperation({
-    summary: 'Upload an avatar',
-    description:
-      'Uploads an image (jpeg/png/webp, up to 5 MB) as a new avatar of the currently authenticated user. Returns the new avatar id.',
-  })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: { file: { type: 'string', format: 'binary' } },
-    },
-  })
-  @ApiOkResponse({ type: String, description: 'Id of the created avatar' })
-  @ApiBadRequestResponse({
-    description: 'Missing file, too large, or not an image',
-  })
-  @ApiUnauthorizedResponse({
-    description: 'Missing, invalid or expired access token',
-  })
-  async uploadAvatar(
-    @Req() req: RequestWithUser<JwtPayloadType>,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-          new FileTypeValidator({ fileType: /^image\/(jpeg|png|webp)$/ }),
-        ],
-      }),
-    )
-    file: IUploadedMulterFile,
-  ): Promise<string> {
-    return await this.service.uploadAvatar(req.user.id, file);
   }
 
   @Patch(':id')
@@ -303,6 +196,169 @@ export class UsersController {
     return toUserResponse(await this.service.delete(id));
   }
 
+  @Roles('admin')
+  @Idempotent()
+  @Post()
+  @ApiOperation({
+    summary: 'Create a user',
+    description:
+      'Creates a user with any role, including `admin`. Admin only. The password is stored hashed and never returned.',
+  })
+  @ApiCreatedResponse({ type: UserResponseDto, description: 'Created user' })
+  @ApiBadRequestResponse({
+    description: 'Validation failed (e.g. duplicate login/email)',
+  })
+  @ApiForbiddenResponse({ description: 'Caller is not an admin' })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid or expired access token',
+  })
+  async create(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
+    return toUserResponse(await this.service.create(dto));
+  }
+
+  @Get('active')
+  @ApiOperation({
+    summary: 'Search active users',
+    description:
+      'Returns users with more than 2 avatars and a description, optionally filtered by an inclusive age range, paginated. Requires authentication.',
+  })
+  @ApiQuery({
+    name: 'minAge',
+    required: false,
+    type: Number,
+    example: 18,
+    description: 'Minimum age, inclusive',
+  })
+  @ApiQuery({
+    name: 'maxAge',
+    required: false,
+    type: Number,
+    example: 99,
+    description: 'Maximum age, inclusive',
+  })
+  @ApiOkResponse({
+    type: [UserResponseDto],
+    description: 'List of matching users (may be empty)',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid or expired access token',
+  })
+  async searchActive(
+    @Query() dto: SearchActiveUsersDto,
+  ): Promise<UserResponseDto[]> {
+    const users = await this.service.searchActive(dto);
+    return users.map(toUserResponse);
+  }
+
+  // Avatars
+
+  @Get('avatars/:avatarId')
+  @ApiOperation({
+    summary: 'Get an avatar',
+    description:
+      'Returns a single avatar with a presigned view url. Requires authentication.',
+  })
+  @ApiParam({
+    name: 'avatarId',
+    format: 'uuid',
+    description: 'UUID of the avatar to fetch',
+  })
+  @ApiOkResponse({ type: AvatarResponseDto, description: 'Requested avatar' })
+  @ApiNotFoundResponse({ description: 'No avatar exists with the given id' })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid or expired access token',
+  })
+  async getAvatar(
+    @Param('avatarId', ParseUUIDPipe) avatarId: string,
+  ): Promise<AvatarResponseDto> {
+    return await this.service.getAvatar(avatarId);
+  }
+
+  @Patch('avatars')
+  @UseInterceptors(FileInterceptor('file'))
+  @Idempotent()
+  @ApiOperation({
+    summary: 'Upload an avatar',
+    description:
+      'Uploads an image (jpeg/png/webp, up to 5 MB) as a new avatar of the currently authenticated user. Returns the new avatar id.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiOkResponse({ type: String, description: 'Id of the created avatar' })
+  @ApiBadRequestResponse({
+    description: 'Missing file, too large, or not an image',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid or expired access token',
+  })
+  async uploadAvatar(
+    @Req() req: RequestWithUser<JwtPayloadType>,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /^image\/(jpeg|png|webp)$/ }),
+        ],
+      }),
+    )
+    file: IUploadedMulterFile,
+  ): Promise<string> {
+    return await this.service.uploadAvatar(req.user.id, file);
+  }
+
+  @Delete('avatars/:avatarId')
+  @ApiOperation({
+    summary: 'Delete an avatar',
+    description:
+      'Soft-deletes an avatar, retaining its database row and stored file. Users may delete their own avatars, admins may delete anyone.',
+  })
+  @ApiParam({
+    name: 'avatarId',
+    format: 'uuid',
+    description: 'UUID of the avatar to delete',
+  })
+  @ApiOkResponse({ description: 'Avatar deleted' })
+  @ApiNotFoundResponse({
+    description:
+      'No avatar exists with the given id or it belongs to someone else',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid or expired access token',
+  })
+  async deleteAvatar(
+    @Param('avatarId', ParseUUIDPipe) avatarId: string,
+    @Req() req: RequestWithUser<JwtPayloadType>,
+  ): Promise<void> {
+    return await this.service.deleteAvatar(
+      req.user.id,
+      req.user.role === 'admin',
+      avatarId,
+    );
+  }
+
+  // Profile
+
+  @Get('profile/my')
+  @ApiOperation({
+    summary: 'Get own profile',
+    description:
+      'Returns the profile of the currently authenticated user. Equivalent to `GET /auth/me`.',
+  })
+  @ApiOkResponse({ type: UserResponseDto, description: 'Own profile' })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid or expired access token',
+  })
+  async getMy(
+    @Req() req: RequestWithUser<JwtPayloadType>,
+  ): Promise<UserResponseDto> {
+    return toUserResponse(await this.service.getById(req.user.id));
+  }
+
   @Get('profile/avatars/my')
   @ApiOperation({
     summary: 'List own avatars',
@@ -344,57 +400,5 @@ export class UsersController {
     @Param('userId', ParseUUIDPipe) userId: string,
   ): Promise<AvatarResponseDto[]> {
     return await this.service.getUserAvatarUrls(userId);
-  }
-
-  @Get('avatars/:avatarId')
-  @ApiOperation({
-    summary: 'Get an avatar',
-    description:
-      'Returns a single avatar with a presigned view url. Requires authentication.',
-  })
-  @ApiParam({
-    name: 'avatarId',
-    format: 'uuid',
-    description: 'UUID of the avatar to fetch',
-  })
-  @ApiOkResponse({ type: AvatarResponseDto, description: 'Requested avatar' })
-  @ApiNotFoundResponse({ description: 'No avatar exists with the given id' })
-  @ApiUnauthorizedResponse({
-    description: 'Missing, invalid or expired access token',
-  })
-  async getAvatar(
-    @Param('avatarId', ParseUUIDPipe) avatarId: string,
-  ): Promise<AvatarResponseDto> {
-    return await this.service.getAvatar(avatarId);
-  }
-
-  @Delete('avatars/:avatarId')
-  @ApiOperation({
-    summary: 'Delete an avatar',
-    description:
-      'Soft-deletes an avatar, retaining its database row and stored file. Users may delete their own avatars, admins may delete anyone.',
-  })
-  @ApiParam({
-    name: 'avatarId',
-    format: 'uuid',
-    description: 'UUID of the avatar to delete',
-  })
-  @ApiOkResponse({ description: 'Avatar deleted' })
-  @ApiNotFoundResponse({
-    description:
-      'No avatar exists with the given id or it belongs to someone else',
-  })
-  @ApiUnauthorizedResponse({
-    description: 'Missing, invalid or expired access token',
-  })
-  async deleteAvatar(
-    @Param('avatarId', ParseUUIDPipe) avatarId: string,
-    @Req() req: RequestWithUser<JwtPayloadType>,
-  ): Promise<void> {
-    return await this.service.deleteAvatar(
-      req.user.id,
-      req.user.role === 'admin',
-      avatarId,
-    );
   }
 }
