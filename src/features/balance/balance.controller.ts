@@ -2,10 +2,10 @@ import { Controller, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 import { RolesGuard } from '@/auth/guards';
-import { WalletService } from './wallet.service';
+import { BalanceService } from './balance.service';
 
 @UseGuards(AuthGuard('jwt'), RolesGuard)
-@Controller('wallet')
-export class WalletController {
-  constructor(private readonly service: WalletService) {}
+@Controller('balance')
+export class BalanceController {
+  constructor(private readonly service: BalanceService) {}
 }
