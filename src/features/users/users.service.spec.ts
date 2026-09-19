@@ -23,6 +23,7 @@ import {
   USER_SEARCH_CACHE_PREFIX,
 } from './users.constants';
 import { UsersService } from './users.service';
+import { ActiveUserResponseDto } from './dto/active-user-response.dto';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -158,6 +159,19 @@ describe('UsersService', () => {
     });
 
     describe('searchActive', () => {
+      const mockActiveUser = {
+        id: 'user-1',
+        login: 'testuser',
+        email: 'test@example.com',
+        role: 'user' as const,
+        age: 25,
+        description: 'Test description',
+        avatarsCount: 3,
+        createdAt: FIXED_DATE,
+        updatedAt: FIXED_DATE,
+        lastAvatarId: 'avatar-uuid-123',
+      } satisfies ActiveUserResponseDto;
+
       it('should return cached result on cache hit', async () => {
         // given
         const dto = {
@@ -165,7 +179,8 @@ describe('UsersService', () => {
           limit: 20,
           offset: 0,
         } as SearchActiveUsersDto;
-        const cached = [{ ...mockUser, id: '1' }];
+
+        const cached = [mockActiveUser];
         cache.get.mockResolvedValue(cached);
 
         // when
@@ -174,6 +189,7 @@ describe('UsersService', () => {
         // then
         expect(result).toBe(cached);
         expect(repository.findActiveUsers).not.toHaveBeenCalled();
+        expect(cache.set).not.toHaveBeenCalled();
       });
 
       it('should fetch and cache results on cache miss', async () => {
@@ -183,19 +199,21 @@ describe('UsersService', () => {
           limit: 20,
           offset: 0,
         } as SearchActiveUsersDto;
-        const users = [{ ...mockUser, id: '1' }];
+
+        const fetchedUsers = [mockActiveUser];
+
         cache.get.mockResolvedValue(null);
-        repository.findActiveUsers.mockResolvedValue(users);
+        repository.findActiveUsers.mockResolvedValue(fetchedUsers);
 
         // when
         const result = await service.searchActive(dto);
 
         // then
-        expect(result).toBe(users);
+        expect(result).toBe(fetchedUsers);
         expect(repository.findActiveUsers).toHaveBeenCalledWith(dto);
         expect(cache.set).toHaveBeenCalledWith(
           USER_ACTIVE_CACHE_KEY(dto),
-          users,
+          fetchedUsers,
           CACHE_TTL_LIST,
         );
       });

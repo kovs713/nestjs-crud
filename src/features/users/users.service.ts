@@ -24,6 +24,7 @@ import {
   USER_SEARCH_CACHE_KEY,
   USER_SEARCH_CACHE_PREFIX,
 } from './users.constants';
+import { ActiveUserResponseDto } from './dto/active-user-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -48,9 +49,11 @@ export class UsersService {
     return users;
   }
 
-  async searchActive(dto: SearchActiveUsersDto): Promise<RawUser[]> {
+  async searchActive(
+    dto: SearchActiveUsersDto,
+  ): Promise<ActiveUserResponseDto[]> {
     const key = USER_ACTIVE_CACHE_KEY(dto);
-    const cached = await this.cache.get<RawUser[]>(key);
+    const cached = await this.cache.get<ActiveUserResponseDto[]>(key);
     if (cached) return cached;
 
     const users = await this.repository.findActiveUsers(dto);

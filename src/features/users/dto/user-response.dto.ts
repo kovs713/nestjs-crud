@@ -27,6 +27,8 @@ export class UserResponseDto {
   })
   readonly description: string | null;
 
+  readonly avatarsCount: number;
+
   @ApiProperty({ format: 'date-time', example: '2026-08-26T12:00:00.000Z' })
   readonly createdAt: Date;
 
@@ -42,6 +44,7 @@ export function toUserResponse(user: RawUser): UserResponseDto {
     email: user.email,
     age: user.age,
     description: user.description,
+    avatarsCount: user.avatarsCount,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };

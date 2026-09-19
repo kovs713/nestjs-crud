@@ -34,10 +34,25 @@ export const users = pgTable(
     deletedAt: timestamp('deleted_at'),
   },
   (table) => [
-    index('users_active_idx')
-      .on(table.age)
+    index('users_active_filters_idx')
+      .on(table.age, table.createdAt)
       .where(
-        sql`${table.deletedAt} IS NULL AND ${table.avatarsCount} > 2 AND ${table.description} IS NOT NULL AND ${table.description} <> ''`,
+        sql`${table.deletedAt} IS NULL
+        AND ${table.avatarsCount} > 2
+        AND ${table.description} IS NOT NULL
+        AND ${table.description} <> '' `,
+      ),
+
+    // maybe it's non necessary, cause it depends on
+    // whether the client request users w/o age filter or not
+    // i'll just keep it here
+    index('users_active_created_at_idx')
+      .on(table.createdAt)
+      .where(
+        sql`${table.deletedAt} IS NULL
+        AND ${table.avatarsCount} > 2
+        AND ${table.description} IS NOT NULL
+        AND ${table.description} <> '' `,
       ),
   ],
 );

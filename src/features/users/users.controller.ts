@@ -49,6 +49,7 @@ import {
   UpdateUserDto,
   UserResponseDto,
 } from './dto';
+import { ActiveUserResponseDto } from './dto/active-user-response.dto';
 import { AvatarResponseDto } from './dto/avatar-response.dto';
 import { SelfOrAdminGuard } from './guards/self-or-admin.guard';
 import { UsersService } from './users.service';
@@ -237,7 +238,7 @@ export class UsersController {
     description: 'Maximum age, inclusive',
   })
   @ApiOkResponse({
-    type: [UserResponseDto],
+    type: [ActiveUserResponseDto],
     description: 'List of matching users (may be empty)',
   })
   @ApiUnauthorizedResponse({
@@ -245,9 +246,8 @@ export class UsersController {
   })
   async searchActive(
     @Query() dto: SearchActiveUsersDto,
-  ): Promise<UserResponseDto[]> {
-    const users = await this.service.searchActive(dto);
-    return users.map(toUserResponse);
+  ): Promise<ActiveUserResponseDto[]> {
+    return await this.service.searchActive(dto);
   }
 
   // Avatars

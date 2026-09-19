@@ -17,6 +17,7 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { isUniqueViolation } from '@/providers/database/database-errors.util';
 import { DATABASE_CLIENT } from '@/providers/database/database.constants';
 import { SearchActiveUsersDto, SearchUsersDto } from '../dto';
+import { ActiveUserResponseDto } from '../dto/active-user-response.dto';
 import { avatars, users } from '../entities';
 import {
   InsertAvatar,
@@ -128,21 +129,41 @@ export class UsersRepository {
     maxAge,
     limit,
     offset,
-  }: SearchActiveUsersDto): Promise<RawUser[]> {
-    return this.db
-      .select()
+  }: SearchActiveUsersDto): Promise<ActiveUserResponseDto[]> {
+    const latestAvatarsSq = this.db
+      .selectDistinctOn([users.id], {
+        id: users.id,
+        login: users.login,
+        email: users.email,
+        role: users.role,
+        age: users.age,
+        description: users.description,
+        avatarsCount: users.avatarsCount,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+        deletedAt: users.deletedAt,
+        lastAvatarId: avatars.id,
+      })
       .from(users)
+      .innerJoin(avatars, eq(avatars.userId, users.id))
       .where(
         and(
-          notDeleted,
+          isNull(users.deletedAt),
           gt(users.avatarsCount, 2),
           isNotNull(users.description),
           ne(users.description, ''),
+          isNull(avatars.deletedAt),
           minAge !== undefined ? gte(users.age, minAge) : undefined,
           maxAge !== undefined ? lte(users.age, maxAge) : undefined,
         ),
       )
-      .orderBy(users.createdAt)
+      .orderBy(users.id, desc(avatars.createdAt))
+      .as('latest_avatars_sq');
+
+    return this.db
+      .select()
+      .from(latestAvatarsSq)
+      .orderBy(desc(latestAvatarsSq.createdAt))
       .limit(limit)
       .offset(offset);
   }
