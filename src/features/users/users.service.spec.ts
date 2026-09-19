@@ -13,6 +13,15 @@ import {
 } from './dto';
 import { UsersRepository } from './repositories';
 import { RawUser } from './types/users.types';
+import {
+  CACHE_TTL_LIST,
+  CACHE_TTL_USER,
+  USER_ACTIVE_CACHE_KEY,
+  USER_ACTIVE_CACHE_PREFIX,
+  USER_CACHE_KEY,
+  USER_SEARCH_CACHE_KEY,
+  USER_SEARCH_CACHE_PREFIX,
+} from './users.constants';
 import { UsersService } from './users.service';
 
 describe('UsersService', () => {
@@ -104,7 +113,11 @@ describe('UsersService', () => {
 
         // then
         expect(found).toBe(user);
-        expect(cache.set).toHaveBeenCalledWith('users:v1:user:1', user, 300);
+        expect(cache.set).toHaveBeenCalledWith(
+          USER_CACHE_KEY('1'),
+          user,
+          CACHE_TTL_USER,
+        );
       });
     });
 
@@ -137,9 +150,9 @@ describe('UsersService', () => {
         expect(result).toBe(users);
         expect(repository.searchUser).toHaveBeenCalledWith(dto);
         expect(cache.set).toHaveBeenCalledWith(
-          expect.stringContaining('users:v1:search:'),
+          USER_SEARCH_CACHE_KEY(dto),
           users,
-          60,
+          CACHE_TTL_LIST,
         );
       });
     });
@@ -181,9 +194,9 @@ describe('UsersService', () => {
         expect(result).toBe(users);
         expect(repository.findActiveUsers).toHaveBeenCalledWith(dto);
         expect(cache.set).toHaveBeenCalledWith(
-          expect.stringContaining('users:v1:active:'),
+          USER_ACTIVE_CACHE_KEY(dto),
           users,
-          60,
+          CACHE_TTL_LIST,
         );
       });
     });
@@ -215,8 +228,12 @@ describe('UsersService', () => {
             description: undefined,
           }),
         );
-        expect(cache.delByPrefix).toHaveBeenCalledWith('users:v1:search:');
-        expect(cache.delByPrefix).toHaveBeenCalledWith('users:v1:active:');
+        expect(cache.delByPrefix).toHaveBeenCalledWith(
+          USER_SEARCH_CACHE_PREFIX,
+        );
+        expect(cache.delByPrefix).toHaveBeenCalledWith(
+          USER_ACTIVE_CACHE_PREFIX,
+        );
       });
     });
 
@@ -236,9 +253,13 @@ describe('UsersService', () => {
           mockUser.id,
           updateDto,
         );
-        expect(cache.delByPrefix).toHaveBeenCalledWith('users:v1:search:');
-        expect(cache.delByPrefix).toHaveBeenCalledWith('users:v1:active:');
-        expect(cache.del).toHaveBeenCalledWith('users:v1:user:' + mockUser.id);
+        expect(cache.delByPrefix).toHaveBeenCalledWith(
+          USER_SEARCH_CACHE_PREFIX,
+        );
+        expect(cache.delByPrefix).toHaveBeenCalledWith(
+          USER_ACTIVE_CACHE_PREFIX,
+        );
+        expect(cache.del).toHaveBeenCalledWith(USER_CACHE_KEY(mockUser.id));
       });
     });
 
@@ -264,9 +285,13 @@ describe('UsersService', () => {
         // then
         expect(result).toEqual(mockUser);
         expect(repository.softDeleteUserById).toHaveBeenCalledWith('user_001');
-        expect(cache.delByPrefix).toHaveBeenCalledWith('users:v1:search:');
-        expect(cache.delByPrefix).toHaveBeenCalledWith('users:v1:active:');
-        expect(cache.del).toHaveBeenCalledWith('users:v1:user:user_001');
+        expect(cache.delByPrefix).toHaveBeenCalledWith(
+          USER_SEARCH_CACHE_PREFIX,
+        );
+        expect(cache.delByPrefix).toHaveBeenCalledWith(
+          USER_ACTIVE_CACHE_PREFIX,
+        );
+        expect(cache.del).toHaveBeenCalledWith(USER_CACHE_KEY('user_001'));
       });
     });
   });
@@ -338,8 +363,12 @@ describe('UsersService', () => {
             path: expect.stringContaining('avatars/'),
           }),
         );
-        expect(cache.delByPrefix).toHaveBeenCalledWith('users:v1:search:');
-        expect(cache.delByPrefix).toHaveBeenCalledWith('users:v1:active:');
+        expect(cache.delByPrefix).toHaveBeenCalledWith(
+          USER_SEARCH_CACHE_PREFIX,
+        );
+        expect(cache.delByPrefix).toHaveBeenCalledWith(
+          USER_ACTIVE_CACHE_PREFIX,
+        );
       });
     });
 
@@ -384,8 +413,12 @@ describe('UsersService', () => {
         await service.deleteAvatar(mockUser.id, false, avatarId);
 
         // then
-        expect(cache.delByPrefix).toHaveBeenCalledWith('users:v1:search:');
-        expect(cache.delByPrefix).toHaveBeenCalledWith('users:v1:active:');
+        expect(cache.delByPrefix).toHaveBeenCalledWith(
+          USER_SEARCH_CACHE_PREFIX,
+        );
+        expect(cache.delByPrefix).toHaveBeenCalledWith(
+          USER_ACTIVE_CACHE_PREFIX,
+        );
       });
 
       it('should throw NOT_FOUND when no avatar was soft-deleted', async () => {

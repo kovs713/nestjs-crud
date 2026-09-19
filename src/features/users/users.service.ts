@@ -15,18 +15,15 @@ import {
 } from './dto';
 import { UsersRepository } from './repositories';
 import { InsertUser, RawUser, UpdateUser } from './types/users.types';
-
-const USER_SEARCH_CACHE_PREFIX = 'users:v1:search:';
-const USER_ACTIVE_CACHE_PREFIX = 'users:v1:active:';
-
-const USER_CACHE_KEY = (id: string) => `users:v1:user:${id}`;
-const USER_SEARCH_CACHE_KEY = (dto: unknown) =>
-  `users:v1:search:${JSON.stringify(dto)}`;
-const USER_ACTIVE_CACHE_KEY = (dto: unknown) =>
-  `users:v1:active:${JSON.stringify(dto)}`;
-
-const CACHE_TTL_USER = 300;
-const CACHE_TTL_LIST = 60;
+import {
+  CACHE_TTL_LIST,
+  CACHE_TTL_USER,
+  USER_ACTIVE_CACHE_KEY,
+  USER_ACTIVE_CACHE_PREFIX,
+  USER_CACHE_KEY,
+  USER_SEARCH_CACHE_KEY,
+  USER_SEARCH_CACHE_PREFIX,
+} from './users.constants';
 
 @Injectable()
 export class UsersService {
