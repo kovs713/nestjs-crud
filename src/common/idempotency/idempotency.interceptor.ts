@@ -11,7 +11,7 @@ import type { Request, Response } from 'express';
 import { Redis } from 'ioredis';
 import { from, Observable, of, switchMap, tap } from 'rxjs';
 
-import { REDIS_CLIENT } from '@/providers/cache/cache.constants';
+import { CACHE_CLIENT } from '@/providers/cache/cache.constants';
 import { IDEMPOTENT_KEY } from './idempotency.decorator';
 
 const HEADER = 'idempotency-key';
@@ -22,7 +22,7 @@ type StoredResponse = { statusCode: number; body: unknown };
 export class IdempotencyInterceptor implements NestInterceptor {
   constructor(
     private readonly reflector: Reflector,
-    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    @Inject(CACHE_CLIENT) private readonly redis: Redis,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {

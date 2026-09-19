@@ -3,10 +3,12 @@ import { Global, Module } from '@nestjs/common';
 import { CacheModule } from './cache/cache.module';
 import { DatabaseModule } from './database/database.module';
 import { FilesModule } from './files/files.module';
+import { QueueModule } from './queue/queue.module';
+import { RedisModule } from './redis/redis.module';
 
 @Global()
 @Module({
-  imports: [DatabaseModule, CacheModule, FilesModule],
-  exports: [DatabaseModule, CacheModule, FilesModule],
+  imports: [DatabaseModule, FilesModule, RedisModule, CacheModule, QueueModule],
+  exports: [DatabaseModule, FilesModule, RedisModule, CacheModule, QueueModule],
 })
 export class ProvidersModule {}

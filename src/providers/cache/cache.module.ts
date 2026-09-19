@@ -3,41 +3,43 @@ import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
 
 import { AllConfigType } from '@/config';
+import { RedisConfig } from '../redis/redis.config';
+import { REDIS_CONFIG } from '../redis/redis.constants';
 import { CacheConfig } from './cache.config';
-import { CACHE_OPTIONS, REDIS_CLIENT } from './cache.constants';
+import { CACHE_CLIENT, CACHE_CONFIG } from './cache.constants';
 import { CacheService } from './cache.service';
 
 @Module({
   providers: [
     {
-      provide: CACHE_OPTIONS,
+      provide: CACHE_CONFIG,
       inject: [ConfigService],
       useFactory: (config: ConfigService<AllConfigType>): CacheConfig => ({
-        host: config.getOrThrow<string>('redis.host', { infer: true }),
-        port: config.getOrThrow('redis.port', { infer: true }),
-        password: config.getOrThrow<string>('redis.password', { infer: true }),
-        defaultCacheTtlSeconds: config.getOrThrow(
-          'redis.defaultCacheTtlSeconds',
-          { infer: true },
-        ),
+        dbIndex: config.getOrThrow('cache.dbIndex', { infer: true }),
+        defaultTtlSeconds: config.getOrThrow('cache.defaultTtlSeconds', {
+          infer: true,
+        }),
       }),
     },
     {
-      provide: REDIS_CLIENT,
-      inject: [CACHE_OPTIONS],
-      useFactory: (options: CacheConfig): Redis =>
+      provide: CACHE_CLIENT,
+      inject: [REDIS_CONFIG, CACHE_CONFIG],
+      useFactory: (redisConfig: RedisConfig, cacheConfig: CacheConfig): Redis =>
         new Redis({
-          host: options.host,
-          port: options.port,
-          password: options.password,
+          host: redisConfig.host,
+          port: redisConfig.port,
+          password: redisConfig.password,
+          db: cacheConfig.dbIndex,
+          lazyConnect: true,
+          maxRetriesPerRequest: null,
         }),
     },
     CacheService,
   ],
-  exports: [CacheService, REDIS_CLIENT],
+  exports: [CacheService, CACHE_CLIENT],
 })
 export class CacheModule implements OnModuleDestroy {
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
+  constructor(@Inject(CACHE_CLIENT) private readonly redis: Redis) {}
 
   async onModuleDestroy() {
     await this.redis.quit();

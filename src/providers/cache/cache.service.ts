@@ -2,15 +2,15 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
 
 import type { CacheConfig } from './cache.config';
-import { CACHE_OPTIONS, REDIS_CLIENT } from './cache.constants';
+import { CACHE_CLIENT, CACHE_CONFIG } from './cache.constants';
 
 @Injectable()
 export class CacheService {
   private readonly logger: Logger = new Logger(CacheService.name);
 
   constructor(
-    @Inject(REDIS_CLIENT) private readonly redis: Redis,
-    @Inject(CACHE_OPTIONS) private readonly cacheConfig: CacheConfig,
+    @Inject(CACHE_CLIENT) private readonly redis: Redis,
+    @Inject(CACHE_CONFIG) private readonly cacheConfig: CacheConfig,
   ) {}
 
   async get<T>(key: string): Promise<T | null> {
@@ -28,7 +28,7 @@ export class CacheService {
   }
 
   async set<T>(key: string, value: T, ttlSeconds?: number): Promise<void> {
-    const ttl = ttlSeconds ?? this.cacheConfig.defaultCacheTtlSeconds;
+    const ttl = ttlSeconds ?? this.cacheConfig.defaultTtlSeconds;
 
     if (ttlSeconds === undefined) {
       this.logger.warn(`No TTL for key "${key}", defaulting to ${ttl}s`);

@@ -1,42 +1,31 @@
 import { registerAs } from '@nestjs/config';
-import { IsInt, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsInt, IsOptional } from 'class-validator';
 
 import { validateConfig } from '@/config';
 
 export type CacheConfig = {
-  host: string;
-  port: number;
-  password: string;
-
-  defaultCacheTtlSeconds: number;
+  defaultTtlSeconds: number;
+  dbIndex: number;
 };
 
 class EnvironmentVariableValidator {
-  @IsString()
-  REDIS_HOST: string;
+  @IsInt()
+  @IsOptional()
+  CACHE_DEFAULT_TTL_SECONDS?: number;
 
   @IsInt()
-  REDIS_PORT: number;
-
   @IsOptional()
-  REDIS_PASSWORD: string;
-
-  @IsNumber()
-  @IsOptional()
-  DEFAULT_CACHE_TTL_SECONDS?: number;
+  CACHE_DB_INDEX: number;
 }
 
-export default registerAs<CacheConfig>('redis', () => {
+export default registerAs<CacheConfig>('cache', () => {
   const validatedConfig = validateConfig(
     process.env,
     EnvironmentVariableValidator,
   );
 
   return {
-    host: validatedConfig.REDIS_HOST,
-    port: validatedConfig.REDIS_PORT,
-    password: validatedConfig.REDIS_PASSWORD,
-
-    defaultCacheTtlSeconds: validatedConfig.DEFAULT_CACHE_TTL_SECONDS || 60,
+    dbIndex: validatedConfig.CACHE_DB_INDEX || 0,
+    defaultTtlSeconds: validatedConfig.CACHE_DEFAULT_TTL_SECONDS || 3600,
   };
 });

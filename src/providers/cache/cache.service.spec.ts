@@ -3,17 +3,16 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Redis } from 'ioredis';
 
 import type { CacheConfig } from './cache.config';
-import { CACHE_OPTIONS, REDIS_CLIENT } from './cache.constants';
+import { CACHE_CLIENT, CACHE_CONFIG } from './cache.constants';
 import { CacheService } from './cache.service';
 
 describe('CacheService', () => {
   let service: CacheService;
   let redis: DeepMocked<Redis>;
+
   const mockCacheConfig: CacheConfig = {
-    host: 'localhost',
-    port: 6379,
-    password: 'test-password',
-    defaultCacheTtlSeconds: 60,
+    dbIndex: 0,
+    defaultTtlSeconds: 60,
   };
 
   beforeEach(async () => {
@@ -21,18 +20,18 @@ describe('CacheService', () => {
       providers: [
         CacheService,
         {
-          provide: REDIS_CLIENT,
+          provide: CACHE_CLIENT,
           useValue: createMock<Redis>(),
         },
         {
-          provide: CACHE_OPTIONS,
+          provide: CACHE_CONFIG,
           useValue: mockCacheConfig,
         },
       ],
     }).compile();
 
     service = module.get<CacheService>(CacheService);
-    redis = module.get<DeepMocked<Redis>>(REDIS_CLIENT);
+    redis = module.get<DeepMocked<Redis>>(CACHE_CLIENT);
   });
 
   it('should be defined', () => {
@@ -100,7 +99,11 @@ describe('CacheService', () => {
       await service.set(key, value);
 
       // then
-      expect(redis.setex).toHaveBeenCalledWith(key, 60, '{"id":"1"}');
+      expect(redis.setex).toHaveBeenCalledWith(
+        key,
+        mockCacheConfig.defaultTtlSeconds,
+        '{"id":"1"}',
+      );
     });
 
     it('should gracefully handle Redis error without throwing', async () => {
@@ -109,7 +112,7 @@ describe('CacheService', () => {
 
       // when & then
       await expect(
-        service.set('user:1', { id: '1' }, 60),
+        service.set('user:1', { id: '1' }, mockCacheConfig.defaultTtlSeconds),
       ).resolves.toBeUndefined();
     });
   });
