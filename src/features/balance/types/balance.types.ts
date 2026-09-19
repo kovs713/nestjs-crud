@@ -1,7 +1,7 @@
-import { BALANCE_RESET_JOBS } from '../balance.constants';
+import { BALANCE_JOBS } from '../balance.constants';
 
-export type BalanceResetJobPayload = {
-  [BALANCE_RESET_JOBS.RESET_ALL]: {
+export type BalanceJobPayload = {
+  [BALANCE_JOBS.RESET_ALL]: {
     triggeredBy: string;
     triggeredAt: string;
   };

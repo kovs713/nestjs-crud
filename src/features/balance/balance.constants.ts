@@ -1,8 +1,7 @@
-export const BALANCE_QUQUE = 'balance-quque' as const;
+export const BALANCE_QUEUE = 'balance:queue' as const;
 
-export const BALANCE_RESET_JOBS = {
+export const BALANCE_JOBS = {
   RESET_ALL: 'reset-all-balances',
 } as const;
 
-export type BalanceResetJobName =
-  (typeof BALANCE_RESET_JOBS)[keyof typeof BALANCE_RESET_JOBS];
+export type BalanceJobName = (typeof BALANCE_JOBS)[keyof typeof BALANCE_JOBS];
