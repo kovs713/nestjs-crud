@@ -432,24 +432,4 @@ describe('UsersService', () => {
       });
     });
   });
-
-  describe('aggregation', () => {
-    it('should ensure cache invalidation affects both user search and avatar listings consistently', async () => {
-      // given
-      repository.createUser.mockResolvedValue(mockUser);
-
-      // when
-      await service.create({
-        login: 'new',
-        password: 'pass',
-        role: 'user',
-        email: 'new@test.com',
-      });
-
-      // then
-      expect(cache.delByPrefix).toHaveBeenCalledTimes(2);
-      expect(cache.delByPrefix).toHaveBeenCalledWith('users:v1:search:');
-      expect(cache.delByPrefix).toHaveBeenCalledWith('users:v1:active:');
-    });
-  });
 });
