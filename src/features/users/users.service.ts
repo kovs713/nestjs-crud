@@ -1,9 +1,9 @@
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
 
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-
 import { hashPassword } from '@/common/utils';
+import { CacheService } from '@/providers/cache/cache.service';
 import { IFileService } from '@/providers/files/files.adapter';
 import { IUploadedMulterFile } from '@/providers/files/s3/interfaces';
 import {
@@ -16,6 +16,18 @@ import {
 import { UsersRepository } from './repositories';
 import { InsertUser, RawUser, UpdateUser } from './types/users.types';
 
+const USER_SEARCH_CACHE_PREFIX = 'users:v1:search:';
+const USER_ACTIVE_CACHE_PREFIX = 'users:v1:active:';
+
+const USER_CACHE_KEY = (id: string) => `users:v1:user:${id}`;
+const USER_SEARCH_CACHE_KEY = (dto: unknown) =>
+  `users:v1:search:${JSON.stringify(dto)}`;
+const USER_ACTIVE_CACHE_KEY = (dto: unknown) =>
+  `users:v1:active:${JSON.stringify(dto)}`;
+
+const CACHE_TTL_USER = 300;
+const CACHE_TTL_LIST = 60;
+
 @Injectable()
 export class UsersService {
   private readonly logger: Logger = new Logger(UsersService.name);
@@ -23,23 +35,46 @@ export class UsersService {
   constructor(
     private readonly repository: UsersRepository,
     private readonly s3Service: IFileService,
+    private readonly cache: CacheService,
   ) {}
 
+  // Users
+
   async search(dto: SearchUsersDto): Promise<RawUser[]> {
-    return this.repository.searchUser(dto);
+    const key = USER_SEARCH_CACHE_KEY(dto);
+    const cached = await this.cache.get<RawUser[]>(key);
+    if (cached) return cached;
+
+    const users = await this.repository.searchUser(dto);
+    await this.cache.set(key, users, CACHE_TTL_LIST);
+
+    return users;
   }
 
   async searchActive(dto: SearchActiveUsersDto): Promise<RawUser[]> {
-    return this.repository.findActiveUsers(dto);
+    const key = USER_ACTIVE_CACHE_KEY(dto);
+    const cached = await this.cache.get<RawUser[]>(key);
+    if (cached) return cached;
+
+    const users = await this.repository.findActiveUsers(dto);
+    await this.cache.set(key, users, CACHE_TTL_LIST);
+
+    return users;
   }
 
   async getById(id: string): Promise<RawUser> {
+    const key = USER_CACHE_KEY(id);
+    const cached = await this.cache.get<RawUser>(key);
+    if (cached) return cached;
+
     const user = await this.repository.findById(id);
 
     if (!user) {
       this.logger.warn(`User not found: ${id}`);
       throw new NotFoundException(`user ${id} not found`);
     }
+
+    await this.cache.set(key, user, CACHE_TTL_USER);
 
     return user;
   }
@@ -74,6 +109,8 @@ export class UsersService {
 
     const user = await this.repository.createUser(userData);
 
+    await this.invalidateListCaches();
+
     this.logger.log(`Successfully created: ${user.id}`);
 
     return user;
@@ -97,6 +134,9 @@ export class UsersService {
       throw new NotFoundException(`user ${id} not found`);
     }
 
+    await this.invalidateListCaches();
+    await this.cache.del(USER_CACHE_KEY(user.id));
+
     this.logger.log(`Successfully updated: ${id}`);
 
     return user;
@@ -112,18 +152,21 @@ export class UsersService {
       throw new NotFoundException(`user ${id} not found`);
     }
 
+    await this.invalidateListCaches();
+    await this.cache.del(USER_CACHE_KEY(user.id));
+
     this.logger.log(`Successfully deleted: ${id}`);
 
     return user;
   }
+
+  // Avatars
 
   async uploadAvatar(
     userId: string,
     file: IUploadedMulterFile,
   ): Promise<string> {
     this.logger.log(`Uploading avatar for user: ${userId}`);
-
-    await this.getById(userId);
 
     const name = `${randomUUID()}${extname(file.originalname).toLowerCase()}`;
 
@@ -132,6 +175,8 @@ export class UsersService {
       userId,
       path: `avatars/${name}`,
     });
+
+    await this.invalidateListCaches();
 
     this.logger.log(`Successfully uploaded avatar: ${avatar.id}`);
 
@@ -181,5 +226,12 @@ export class UsersService {
     }
 
     this.logger.log(`Successfully deleted avatar: ${avatarId}`);
+
+    await this.invalidateListCaches();
+  }
+
+  private async invalidateListCaches(): Promise<void> {
+    await this.cache.delByPrefix(USER_ACTIVE_CACHE_PREFIX);
+    await this.cache.delByPrefix(USER_SEARCH_CACHE_PREFIX);
   }
 }
