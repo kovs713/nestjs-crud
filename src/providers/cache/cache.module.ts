@@ -3,19 +3,33 @@ import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
 
 import { AllConfigType } from '@/config';
-import { REDIS_CLIENT } from './cache.constants';
+import { CacheConfig } from './cache.config';
+import { CACHE_OPTIONS, REDIS_CLIENT } from './cache.constants';
 import { CacheService } from './cache.service';
 
 @Module({
   providers: [
     {
-      provide: REDIS_CLIENT,
+      provide: CACHE_OPTIONS,
       inject: [ConfigService],
-      useFactory: (config: ConfigService<AllConfigType>): Redis =>
+      useFactory: (config: ConfigService<AllConfigType>): CacheConfig => ({
+        host: config.getOrThrow<string>('redis.host', { infer: true }),
+        port: config.getOrThrow('redis.port', { infer: true }),
+        password: config.getOrThrow<string>('redis.password', { infer: true }),
+        defaultCacheTtlSeconds: config.getOrThrow(
+          'redis.defaultCacheTtlSeconds',
+          { infer: true },
+        ),
+      }),
+    },
+    {
+      provide: REDIS_CLIENT,
+      inject: [CACHE_OPTIONS],
+      useFactory: (options: CacheConfig): Redis =>
         new Redis({
-          host: config.getOrThrow('redis.host', { infer: true }),
-          port: config.getOrThrow('redis.port', { infer: true }),
-          password: config.get('redis.password', { infer: true }),
+          host: options.host,
+          port: options.port,
+          password: options.password,
         }),
     },
     CacheService,
