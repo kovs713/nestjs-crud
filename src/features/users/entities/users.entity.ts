@@ -25,6 +25,8 @@ export const users = pgTable(
     description: text('description'),
     avatarsCount: integer('avatars_count').notNull().default(0),
 
+    balance: integer('balance').notNull().default(0),
+
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
