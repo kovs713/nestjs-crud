@@ -1,4 +1,5 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import type { ExecutionContext } from '@nestjs/common';
+import { createParamDecorator } from '@nestjs/common';
 
 import type { RequestWithUser } from '@/common/types';
 import type { JwtPayloadType } from '../types';
@@ -8,6 +9,6 @@ export const User = createParamDecorator(
     const req = ctx
       .switchToHttp()
       .getRequest<RequestWithUser<JwtPayloadType>>();
-    return data ? req.user?.[data] : req.user;
+    return data ? req.user[data] : req.user;
   },
 );

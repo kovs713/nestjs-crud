@@ -289,7 +289,7 @@ export class UsersController {
     },
   })
   @ApiOkResponse({
-    type: [UploadAvatarResponseDto],
+    type: UploadAvatarResponseDto,
     description: 'Id of the created avatar',
   })
   @ApiBadRequestResponse({

@@ -375,7 +375,7 @@ describe('UsersService', () => {
         const result = await service.uploadAvatar(mockUser.id, file);
 
         // then
-        expect(result).toBe('new_av');
+        expect(result).toEqual({ id: 'new_av' });
         expect(repository.createAvatar).toHaveBeenCalledWith(
           expect.objectContaining({
             userId: mockUser.id,
