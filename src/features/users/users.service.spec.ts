@@ -1,5 +1,4 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { CacheService } from '@/providers/cache/cache.service';
@@ -11,6 +10,8 @@ import {
   SearchUsersDto,
   UpdateUserDto,
 } from './dto';
+import { ActiveUserResponseDto } from './dto/active-user-response.dto';
+import { AvatarNotFoundException, UserNotFoundException } from './exceptions';
 import { UsersRepository } from './repositories';
 import { RawUser } from './types/users.types';
 import {
@@ -23,7 +24,6 @@ import {
   USER_SEARCH_CACHE_PREFIX,
 } from './users.constants';
 import { UsersService } from './users.service';
-import { ActiveUserResponseDto } from './dto/active-user-response.dto';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -86,7 +86,7 @@ describe('UsersService', () => {
 
         // when & then
         await expect(service.getById('missing')).rejects.toBeInstanceOf(
-          NotFoundException,
+          UserNotFoundException,
         );
         expect(repository.findById).toHaveBeenCalledWith('missing');
       });
@@ -289,7 +289,7 @@ describe('UsersService', () => {
 
         // when & then
         await expect(service.delete('missing')).rejects.toBeInstanceOf(
-          NotFoundException,
+          UserNotFoundException,
         );
         expect(repository.softDeleteUserById).toHaveBeenCalledWith('missing');
       });
@@ -323,7 +323,7 @@ describe('UsersService', () => {
 
         // when & then
         await expect(service.getAvatar('deleted')).rejects.toBeInstanceOf(
-          NotFoundException,
+          AvatarNotFoundException,
         );
         expect(files.readFile).not.toHaveBeenCalled();
       });
@@ -447,7 +447,7 @@ describe('UsersService', () => {
         // when & then
         await expect(
           service.deleteAvatar(mockUser.id, false, 'missing'),
-        ).rejects.toBeInstanceOf(NotFoundException);
+        ).rejects.toBeInstanceOf(AvatarNotFoundException);
         expect(files.deleteFile).not.toHaveBeenCalled();
       });
     });
