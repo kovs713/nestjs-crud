@@ -47,6 +47,7 @@ import {
   SearchUsersDto,
   toUserResponse,
   UpdateUserDto,
+  UploadAvatarResponseDto,
   UserResponseDto,
 } from './dto';
 import { ActiveUserResponseDto } from './dto/active-user-response.dto';
@@ -289,7 +290,10 @@ export class UsersController {
       properties: { file: { type: 'string', format: 'binary' } },
     },
   })
-  @ApiOkResponse({ type: String, description: 'Id of the created avatar' })
+  @ApiOkResponse({
+    type: UploadAvatarResponseDto,
+    description: 'Id of the created avatar',
+  })
   @ApiBadRequestResponse({
     description: 'Missing file, too large, or not an image',
   })
@@ -307,8 +311,8 @@ export class UsersController {
       }),
     )
     file: IUploadedMulterFile,
-  ): Promise<string> {
-    return await this.service.uploadAvatar(req.user.id, file);
+  ): Promise<UploadAvatarResponseDto> {
+    return { id: await this.service.uploadAvatar(req.user.id, file) };
   }
 
   @Delete('avatars/:avatarId')
