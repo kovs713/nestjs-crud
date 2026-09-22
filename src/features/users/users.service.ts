@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
 
@@ -13,6 +13,8 @@ import {
   SearchUsersDto,
   UpdateUserDto,
 } from './dto';
+import { ActiveUserResponseDto } from './dto/active-user-response.dto';
+import { AvatarNotFoundException, UserNotFoundException } from './exceptions';
 import { UsersRepository } from './repositories';
 import { InsertUser, RawUser, UpdateUser } from './types/users.types';
 import {
@@ -24,7 +26,6 @@ import {
   USER_SEARCH_CACHE_KEY,
   USER_SEARCH_CACHE_PREFIX,
 } from './users.constants';
-import { ActiveUserResponseDto } from './dto/active-user-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -71,7 +72,7 @@ export class UsersService {
 
     if (!user) {
       this.logger.warn(`User not found: ${id}`);
-      throw new NotFoundException(`user ${id} not found`);
+      throw new UserNotFoundException(id);
     }
 
     await this.cache.set(key, user, CACHE_TTL_USER);
@@ -82,7 +83,7 @@ export class UsersService {
   async getByLogin(login: string): Promise<RawUser> {
     const user = await this.repository.findUserByLogin(login);
 
-    if (!user) throw new NotFoundException('user not found');
+    if (!user) throw new UserNotFoundException();
 
     return user;
   }
@@ -90,7 +91,7 @@ export class UsersService {
   async getByEmail(email: string): Promise<RawUser> {
     const user = await this.repository.findUserByEmail(email);
 
-    if (!user) throw new NotFoundException('user not found');
+    if (!user) throw new UserNotFoundException();
 
     return user;
   }
@@ -131,7 +132,7 @@ export class UsersService {
     const user = await this.repository.updateUserById(id, userData);
     if (!user) {
       this.logger.warn(`User not found: ${id}`);
-      throw new NotFoundException(`user ${id} not found`);
+      throw new UserNotFoundException(id);
     }
 
     await this.invalidateListCaches();
@@ -149,7 +150,7 @@ export class UsersService {
 
     if (!user) {
       this.logger.warn(`User not found: ${id}`);
-      throw new NotFoundException(`user ${id} not found`);
+      throw new UserNotFoundException(id);
     }
 
     await this.invalidateListCaches();
@@ -199,7 +200,7 @@ export class UsersService {
 
     if (!avatar) {
       this.logger.warn(`Avatar not found: ${avatarId}`);
-      throw new NotFoundException(`avatar ${avatarId} not found`);
+      throw new AvatarNotFoundException(avatarId);
     }
 
     return {
@@ -222,7 +223,7 @@ export class UsersService {
 
     if (!deletedAvatar) {
       this.logger.warn(`Avatar not found: ${avatarId}`);
-      throw new NotFoundException(`avatar ${avatarId} not found`);
+      throw new AvatarNotFoundException(avatarId);
     }
 
     this.logger.log(`Successfully deleted avatar: ${avatarId}`);
