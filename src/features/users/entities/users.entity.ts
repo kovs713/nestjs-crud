@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import {
   index,
   integer,
+  numeric,
   pgEnum,
   pgTable,
   text,
@@ -25,7 +26,9 @@ export const users = pgTable(
     description: text('description'),
     avatarsCount: integer('avatars_count').notNull().default(0),
 
-    balance: integer('balance').notNull().default(0),
+    balance: numeric('balance', { precision: 12, scale: 2 })
+      .notNull()
+      .default('0.00'),
 
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
