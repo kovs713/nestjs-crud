@@ -4,16 +4,13 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 
-import { Roles } from '@/auth/decorators';
+import { Roles, User } from '@/auth/decorators';
 import { RolesGuard } from '@/auth/guards';
-import { JwtPayloadType } from '@/auth/types';
-import type { RequestWithUser } from '@/common/types';
 import { BalanceService } from './balance.service';
 import { TransferAmountDto, TransferDto } from './dto';
 
@@ -39,13 +36,13 @@ export class BalanceController {
   @ApiResponse({ status: 400, description: 'Insufficient funds or overflow' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async transferBalance(
-    @Param('userId', ParseUUIDPipe) userId: string,
-    @Req() req: RequestWithUser<JwtPayloadType>,
+    @Param('userId', ParseUUIDPipe) recieverId: string,
+    @User('id') senderId: string,
     @Body() dto: TransferAmountDto,
   ): Promise<void> {
     return await this.service.transferBalance({
-      from: req.user.id,
-      to: userId,
+      from: recieverId,
+      to: senderId,
       amount: dto.amount,
     } satisfies TransferDto);
   }

@@ -12,7 +12,6 @@ import {
   Post,
   Query,
   QueryMethod,
-  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -34,11 +33,10 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { Roles } from '@/auth/decorators';
+import { Roles, User } from '@/auth/decorators';
 import { RolesGuard } from '@/auth/guards';
-import { JwtPayloadType } from '@/auth/types';
+import type { JwtPayloadType } from '@/auth/types';
 import { Idempotent } from '@/common/idempotency';
-import type { RequestWithUser } from '@/common/types';
 import type { IUploadedMulterFile } from '@/providers/files/s3/interfaces';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -291,7 +289,7 @@ export class UsersController {
     },
   })
   @ApiOkResponse({
-    type: UploadAvatarResponseDto,
+    type: [UploadAvatarResponseDto],
     description: 'Id of the created avatar',
   })
   @ApiBadRequestResponse({
@@ -301,7 +299,7 @@ export class UsersController {
     description: 'Missing, invalid or expired access token',
   })
   async uploadAvatar(
-    @Req() req: RequestWithUser<JwtPayloadType>,
+    @User('id') userId: string,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -312,7 +310,7 @@ export class UsersController {
     )
     file: IUploadedMulterFile,
   ): Promise<UploadAvatarResponseDto> {
-    return { id: await this.service.uploadAvatar(req.user.id, file) };
+    return await this.service.uploadAvatar(userId, file);
   }
 
   @Delete('avatars/:avatarId')
@@ -336,11 +334,11 @@ export class UsersController {
   })
   async deleteAvatar(
     @Param('avatarId', ParseUUIDPipe) avatarId: string,
-    @Req() req: RequestWithUser<JwtPayloadType>,
+    @User() user: JwtPayloadType,
   ): Promise<void> {
     return await this.service.deleteAvatar(
-      req.user.id,
-      req.user.role === 'admin',
+      user.id,
+      user.role === 'admin',
       avatarId,
     );
   }
@@ -357,10 +355,8 @@ export class UsersController {
   @ApiUnauthorizedResponse({
     description: 'Missing, invalid or expired access token',
   })
-  async getMy(
-    @Req() req: RequestWithUser<JwtPayloadType>,
-  ): Promise<UserResponseDto> {
-    return toUserResponse(await this.service.getById(req.user.id));
+  async getMy(@User('id') userId: string): Promise<UserResponseDto> {
+    return toUserResponse(await this.service.getById(userId));
   }
 
   @Get('profile/avatars/my')
@@ -377,9 +373,9 @@ export class UsersController {
     description: 'Missing, invalid or expired access token',
   })
   async getMyProfileAvatars(
-    @Req() req: RequestWithUser<JwtPayloadType>,
+    @User('id') userId: string,
   ): Promise<AvatarResponseDto[]> {
-    return await this.service.getUserAvatarUrls(req.user.id);
+    return await this.service.getUserAvatarUrls(userId);
   }
 
   @Get('profile/avatars/:userId')

@@ -24,18 +24,18 @@ import {
 import type { Request, Response } from 'express';
 
 import { Idempotent } from '@/common/idempotency';
-import type { RequestWithUser } from '@/common/types';
 import { toUserResponse, UserResponseDto } from '@/features/users/dto';
 import { UsersService } from '@/features/users/users.service';
 import { REFRESH_TOKEN_CONFIG } from './auth.constants';
 import { AuthService } from './auth.service';
+import { User } from './decorators';
 import {
   AuthLoginDto,
   AuthRefreshResponseDto,
   AuthRegisterDto,
   AuthTokensDto,
 } from './dto';
-import type { JwtPayloadType, RefreshTokenConfig } from './types';
+import type { RefreshTokenConfig } from './types';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -163,9 +163,7 @@ export class AuthController {
   @ApiUnauthorizedResponse({
     description: 'Missing, invalid or expired access token',
   })
-  async me(
-    @Req() req: RequestWithUser<JwtPayloadType>,
-  ): Promise<UserResponseDto> {
-    return toUserResponse(await this.usersService.getById(req.user.id));
+  async me(@User('id') userId: string): Promise<UserResponseDto> {
+    return toUserResponse(await this.usersService.getById(userId));
   }
 }

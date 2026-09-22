@@ -12,6 +12,7 @@ import {
   SearchActiveUsersDto,
   SearchUsersDto,
   UpdateUserDto,
+  UploadAvatarResponseDto,
 } from './dto';
 import { ActiveUserResponseDto } from './dto/active-user-response.dto';
 import { AvatarNotFoundException, UserNotFoundException } from './exceptions';
@@ -166,7 +167,7 @@ export class UsersService {
   async uploadAvatar(
     userId: string,
     file: IUploadedMulterFile,
-  ): Promise<string> {
+  ): Promise<UploadAvatarResponseDto> {
     this.logger.log(`Uploading avatar for user: ${userId}`);
 
     const name = `${randomUUID()}${extname(file.originalname).toLowerCase()}`;
@@ -181,7 +182,7 @@ export class UsersService {
 
     this.logger.log(`Successfully uploaded avatar: ${avatar.id}`);
 
-    return avatar.id;
+    return { id: avatar.id };
   }
 
   async getUserAvatarUrls(userId: string): Promise<AvatarResponseDto[]> {
