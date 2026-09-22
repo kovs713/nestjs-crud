@@ -1,5 +1,5 @@
 // Queue
-export const BALANCE_QUEUE = 'balance:queue' as const;
+export const BALANCE_QUEUE = 'balance-queue' as const;
 
 export const BALANCE_JOBS = {
   RESET_ALL: 'reset-all-balances',

@@ -5,11 +5,13 @@ import { Redis } from 'ioredis';
 import { AllConfigType } from '@/config';
 import { RedisConfig } from '../redis/redis.config';
 import { REDIS_CONFIG } from '../redis/redis.constants';
+import { RedisModule } from '../redis/redis.module';
 import { CacheConfig } from './cache.config';
 import { CACHE_CLIENT, CACHE_CONFIG } from './cache.constants';
 import { CacheService } from './cache.service';
 
 @Module({
+  imports: [RedisModule],
   providers: [
     {
       provide: CACHE_CONFIG,

@@ -35,10 +35,10 @@ export default registerAs<QueueConfig>('queue', () => {
   );
 
   return {
-    dbIndex: validatedConfig.QUEUE_DB_INDEX || 1,
-    defaultAttempts: validatedConfig.QUEUE_DEFAULT_ATTEMPTS || 3,
+    dbIndex: validatedConfig.QUEUE_DB_INDEX ?? 1,
+    defaultAttempts: validatedConfig.QUEUE_DEFAULT_ATTEMPTS ?? 3,
     removeCompletedAgeDays:
-      validatedConfig.QUEUE_REMOVE_COMPLETED_AGE_DAYS || 7,
-    removeFailedAgeDays: validatedConfig.QUEUE_REMOVE_FAILED_AGE_DAYS || 30,
+      validatedConfig.QUEUE_REMOVE_COMPLETED_AGE_DAYS ?? 7,
+    removeFailedAgeDays: validatedConfig.QUEUE_REMOVE_FAILED_AGE_DAYS ?? 30,
   };
 });

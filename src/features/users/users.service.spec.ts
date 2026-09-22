@@ -41,6 +41,7 @@ describe('UsersService', () => {
     role: 'user',
     age: 10,
     description: 'user',
+    balance: '0.00',
     avatarsCount: 0,
     createdAt: FIXED_DATE,
     updatedAt: FIXED_DATE,

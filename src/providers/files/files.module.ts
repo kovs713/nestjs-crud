@@ -12,5 +12,6 @@ import { S3Service } from './s3/s3.service';
     },
   ],
   imports: [S3Module],
+  exports: [IFileService],
 })
 export class FilesModule {}

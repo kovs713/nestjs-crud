@@ -17,5 +17,6 @@ import { REDIS_CONFIG } from './redis.constants';
       }),
     },
   ],
+  exports: [REDIS_CONFIG],
 })
 export class RedisModule {}
