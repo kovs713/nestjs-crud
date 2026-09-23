@@ -24,13 +24,18 @@ import {
 import type { Request, Response } from 'express';
 
 import { Idempotent } from '@/common/idempotency';
-import type { RequestWithUser } from '@/common/types';
 import { toUserResponse, UserResponseDto } from '@/features/users/dto';
 import { UsersService } from '@/features/users/users.service';
 import { REFRESH_TOKEN_CONFIG } from './auth.constants';
 import { AuthService } from './auth.service';
-import { AuthLoginDto, AuthRegisterDto, AuthTokensDto } from './dto';
-import type { JwtPayloadType, RefreshTokenConfig } from './types';
+import { User } from './decorators';
+import {
+  AuthLoginDto,
+  AuthRefreshResponseDto,
+  AuthRegisterDto,
+  AuthTokensDto,
+} from './dto';
+import type { RefreshTokenConfig } from './types';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -104,16 +109,7 @@ export class AuthController {
       'Reads the refresh token from the `refresh_token` cookie, verifies it and issues a new access token together with a rotated refresh cookie. No body required.',
   })
   @ApiOkResponse({
-    type: Object,
-    schema: {
-      type: 'object',
-      properties: {
-        accessToken: {
-          type: 'string',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        },
-      },
-    },
+    type: AuthRefreshResponseDto,
     description: 'New access token issued',
   })
   @ApiUnauthorizedResponse({
@@ -122,7 +118,7 @@ export class AuthController {
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ accessToken: string }> {
+  ): Promise<AuthRefreshResponseDto> {
     const { accessToken, refreshToken } = await this.authService.refresh(
       req.cookies?.[this.refreshTokenConfig.name] as string | undefined,
     );
@@ -167,9 +163,7 @@ export class AuthController {
   @ApiUnauthorizedResponse({
     description: 'Missing, invalid or expired access token',
   })
-  async me(
-    @Req() req: RequestWithUser<JwtPayloadType>,
-  ): Promise<UserResponseDto> {
-    return toUserResponse(await this.usersService.getById(req.user.id));
+  async me(@User('id') userId: string): Promise<UserResponseDto> {
+    return toUserResponse(await this.usersService.getById(userId));
   }
 }

@@ -1,40 +1,55 @@
 import { ConflictException, Inject, Injectable } from '@nestjs/common';
-import { and, DrizzleQueryError, eq, ilike, isNull } from 'drizzle-orm';
+import {
+  and,
+  desc,
+  eq,
+  gt,
+  gte,
+  ilike,
+  isNotNull,
+  isNull,
+  lte,
+  ne,
+  sql,
+} from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { DatabaseError } from 'pg';
 
+import { isUniqueViolation } from '@/providers/database/database-errors.util';
 import { DATABASE_CLIENT } from '@/providers/database/database.constants';
-import { SearchUsersDto } from '../dto';
-import { usersEntity } from '../entities';
-import { InsertUser, RawUser, UpdateUser } from '../types/users.types';
+import { SearchActiveUsersDto, SearchUsersDto } from '../dto';
+import { ActiveUserResponseDto } from '../dto/active-user-response.dto';
+import { avatars, users } from '../entities';
+import {
+  InsertAvatar,
+  InsertUser,
+  RawAvatar,
+  RawUser,
+  UpdateUser,
+} from '../types';
 
-// postgresql error code
-const UNIQUE_VIOLATION = '23505';
-
-function isUniqueViolation(error: unknown): boolean {
-  return (
-    error instanceof DrizzleQueryError &&
-    error.cause instanceof DatabaseError &&
-    error.cause.code === UNIQUE_VIOLATION
-  );
-}
-
-const notDeleted = isNull(usersEntity.deletedAt);
+const notDeleted = isNull(users.deletedAt);
+const avatarNotDeleted = isNull(avatars.deletedAt);
 
 @Injectable()
 export class UsersRepository {
   constructor(@Inject(DATABASE_CLIENT) private readonly db: NodePgDatabase) {}
 
-  async search({ login, limit, offset }: SearchUsersDto): Promise<RawUser[]> {
+  // Users
+
+  async searchUser({
+    login,
+    limit,
+    offset,
+  }: SearchUsersDto): Promise<RawUser[]> {
     const where = login
-      ? and(notDeleted, ilike(usersEntity.login, `%${login}%`))
+      ? and(notDeleted, ilike(users.login, `%${login}%`))
       : notDeleted;
 
     return this.db
       .select()
-      .from(usersEntity)
+      .from(users)
       .where(where)
-      .orderBy(usersEntity.createdAt)
+      .orderBy(users.createdAt)
       .limit(limit)
       .offset(offset);
   }
@@ -42,36 +57,33 @@ export class UsersRepository {
   async findById(id: string): Promise<RawUser | null> {
     const user = await this.db
       .select()
-      .from(usersEntity)
-      .where(and(eq(usersEntity.id, id), notDeleted));
+      .from(users)
+      .where(and(eq(users.id, id), notDeleted));
 
     return user[0] ?? null;
   }
 
-  async findByLogin(login: string): Promise<RawUser | null> {
+  async findUserByLogin(login: string): Promise<RawUser | null> {
     const user = await this.db
       .select()
-      .from(usersEntity)
-      .where(and(eq(usersEntity.login, login), notDeleted));
+      .from(users)
+      .where(and(eq(users.login, login), notDeleted));
 
     return user[0] ?? null;
   }
 
-  async findByEmail(email: string): Promise<RawUser | null> {
+  async findUserByEmail(email: string): Promise<RawUser | null> {
     const user = await this.db
       .select()
-      .from(usersEntity)
-      .where(and(eq(usersEntity.email, email), notDeleted));
+      .from(users)
+      .where(and(eq(users.email, email), notDeleted));
 
     return user[0] ?? null;
   }
 
-  async create(userData: InsertUser): Promise<RawUser> {
+  async createUser(userData: InsertUser): Promise<RawUser> {
     try {
-      const [user] = await this.db
-        .insert(usersEntity)
-        .values(userData)
-        .returning();
+      const [user] = await this.db.insert(users).values(userData).returning();
 
       return user;
     } catch (error) {
@@ -82,12 +94,15 @@ export class UsersRepository {
     }
   }
 
-  async updateById(id: string, userData: UpdateUser): Promise<RawUser | null> {
+  async updateUserById(
+    id: string,
+    userData: UpdateUser,
+  ): Promise<RawUser | null> {
     try {
       const [user] = await this.db
-        .update(usersEntity)
+        .update(users)
         .set({ ...userData, updatedAt: new Date() })
-        .where(and(eq(usersEntity.id, id), notDeleted))
+        .where(and(eq(users.id, id), notDeleted))
         .returning();
 
       return user ?? null;
@@ -99,13 +114,118 @@ export class UsersRepository {
     }
   }
 
-  async softDeleteById(id: string): Promise<RawUser | null> {
+  async softDeleteUserById(id: string): Promise<RawUser | null> {
     const [user] = await this.db
-      .update(usersEntity)
+      .update(users)
       .set({ deletedAt: new Date() })
-      .where(and(eq(usersEntity.id, id), notDeleted))
+      .where(and(eq(users.id, id), notDeleted))
       .returning();
 
     return user ?? null;
+  }
+
+  async findActiveUsers({
+    minAge,
+    maxAge,
+    limit,
+    offset,
+  }: SearchActiveUsersDto): Promise<ActiveUserResponseDto[]> {
+    const latestAvatarsSq = this.db
+      .selectDistinctOn([users.id], {
+        id: users.id,
+        login: users.login,
+        email: users.email,
+        role: users.role,
+        age: users.age,
+        description: users.description,
+        avatarsCount: users.avatarsCount,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+        deletedAt: users.deletedAt,
+        lastAvatarId: avatars.id,
+      })
+      .from(users)
+      .innerJoin(avatars, eq(avatars.userId, users.id))
+      .where(
+        and(
+          isNull(users.deletedAt),
+          gt(users.avatarsCount, 2),
+          isNotNull(users.description),
+          ne(users.description, ''),
+          isNull(avatars.deletedAt),
+          minAge !== undefined ? gte(users.age, minAge) : undefined,
+          maxAge !== undefined ? lte(users.age, maxAge) : undefined,
+        ),
+      )
+      .orderBy(users.id, desc(avatars.createdAt))
+      .as('latest_avatars_sq');
+
+    return this.db
+      .select()
+      .from(latestAvatarsSq)
+      .orderBy(desc(latestAvatarsSq.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  // Avatar
+
+  async findAvatarById(id: string): Promise<RawAvatar | null> {
+    const [avatar] = await this.db
+      .select()
+      .from(avatars)
+      .where(and(eq(avatars.id, id), avatarNotDeleted));
+
+    return avatar ?? null;
+  }
+
+  async findAvatarsByUserId(userId: string): Promise<RawAvatar[]> {
+    return this.db
+      .select()
+      .from(avatars)
+      .where(and(eq(avatars.userId, userId), avatarNotDeleted))
+      .orderBy(desc(avatars.createdAt));
+  }
+
+  async createAvatar(data: InsertAvatar): Promise<RawAvatar> {
+    return this.db.transaction(async (tx) => {
+      const [avatar] = await tx.insert(avatars).values(data).returning();
+      await tx
+        .update(users)
+        .set({ avatarsCount: sql`${users.avatarsCount} + 1` })
+        .where(eq(users.id, data.userId));
+
+      return avatar;
+    });
+  }
+
+  async softDeleteAvatarByIdAndUserId(
+    avatarId: string,
+    userId: string | null,
+  ): Promise<RawAvatar | null> {
+    return this.db.transaction(async (tx) => {
+      const whereCondition = userId
+        ? and(
+            eq(avatars.id, avatarId),
+            eq(avatars.userId, userId),
+            avatarNotDeleted,
+          )
+        : and(eq(avatars.id, avatarId), avatarNotDeleted);
+
+      const [avatar] = await tx
+        .update(avatars)
+        .set({ deletedAt: new Date() })
+        .where(whereCondition)
+        .returning();
+
+      if (!avatar) return null;
+
+      await tx
+        .update(users)
+        .set({ avatarsCount: sql`${users.avatarsCount} - 1` })
+        .where(and(eq(users.id, avatar.userId), gt(users.avatarsCount, 0)));
+
+      return avatar;
+    });
   }
 }

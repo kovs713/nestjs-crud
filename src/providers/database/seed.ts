@@ -2,7 +2,8 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
 import { hashPassword } from '@/common/utils';
-import { usersEntity } from '@/features/users/entities';
+import { users } from '@/features/users/entities';
+import { relations } from '@/features/users/entities/relations';
 
 const ADMIN_LOGIN = process.env.ADMIN_LOGIN ?? 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'admin';
@@ -10,18 +11,18 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || null;
 
 async function seed() {
   const pool = new Pool({ connectionString: process.env.DB_URL });
-  const db = drizzle({ client: pool });
+  const db = drizzle({ client: pool, relations: relations });
 
   try {
     const [admin] = await db
-      .insert(usersEntity)
+      .insert(users)
       .values({
         login: ADMIN_LOGIN,
         passwordHash: await hashPassword(ADMIN_PASSWORD),
         role: 'admin',
         email: ADMIN_EMAIL,
       })
-      .onConflictDoNothing({ target: usersEntity.login })
+      .onConflictDoNothing({ target: users.login })
       .returning();
 
     if (admin) {

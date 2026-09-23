@@ -7,31 +7,33 @@ export class UserResponseDto {
     example: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d',
     format: 'uuid',
   })
-  id: string;
+  readonly id: string;
 
   @ApiProperty({ example: 'john_doe' })
-  login: string;
+  readonly login: string;
 
   @ApiProperty({ enum: ['user', 'admin'] })
-  role: UserRole;
+  readonly role: UserRole;
 
   @ApiProperty({ nullable: true, example: 'john@example.com' })
-  email: string | null;
+  readonly email: string | null;
 
   @ApiProperty({ nullable: true, example: 25 })
-  age: number | null;
+  readonly age: number | null;
 
   @ApiProperty({
     nullable: true,
     example: 'Backend developer from Prague',
   })
-  description: string | null;
+  readonly description: string | null;
+
+  readonly avatarsCount: number;
 
   @ApiProperty({ format: 'date-time', example: '2026-08-26T12:00:00.000Z' })
-  createdAt: Date;
+  readonly createdAt: Date;
 
   @ApiProperty({ format: 'date-time', example: '2026-08-26T12:00:00.000Z' })
-  updatedAt: Date;
+  readonly updatedAt: Date;
 }
 
 export function toUserResponse(user: RawUser): UserResponseDto {
@@ -42,6 +44,7 @@ export function toUserResponse(user: RawUser): UserResponseDto {
     email: user.email,
     age: user.age,
     description: user.description,
+    avatarsCount: user.avatarsCount,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };

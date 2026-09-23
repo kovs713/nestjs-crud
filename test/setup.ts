@@ -7,6 +7,8 @@ import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
 
+import { relations } from '@/features/users/entities/relations';
+
 export class TestDatabase {
   private container?: StartedPostgreSqlContainer;
   private pool?: Pool;
@@ -21,7 +23,7 @@ export class TestDatabase {
 
     this.url = this.container.getConnectionUri();
     this.pool = new Pool({ connectionString: this.url });
-    this.db = drizzle({ client: this.pool });
+    this.db = drizzle({ client: this.pool, relations: relations });
 
     await migrate(this.db, { migrationsFolder: './drizzle' });
   }

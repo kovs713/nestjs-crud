@@ -4,6 +4,7 @@ import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
 import { AllConfigType } from '@/config';
+import { relations } from '@/features/users/entities/relations';
 import { DATABASE_CLIENT, DATABASE_POOL } from './database.constants';
 
 @Module({
@@ -23,7 +24,7 @@ import { DATABASE_CLIENT, DATABASE_POOL } from './database.constants';
       provide: DATABASE_CLIENT,
       inject: [DATABASE_POOL],
       useFactory: (pool: Pool): NodePgDatabase => {
-        const client = drizzle({ client: pool });
+        const client = drizzle({ client: pool, relations: relations });
 
         return client;
       },

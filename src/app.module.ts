@@ -10,13 +10,24 @@ import appConfig from './config/app.config';
 import { FeaturesModule } from './features/features.module';
 import cacheConfig from './providers/cache/cache.config';
 import databaseConfig from './providers/database/database.config';
+import s3Config from './providers/files/s3/s3.config';
 import { ProvidersModule } from './providers/providers.module';
+import queueConfig from './providers/queue/queue.config';
+import redisConfig from './providers/redis/redis.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, authConfig, cacheConfig],
+      load: [
+        appConfig,
+        authConfig,
+        databaseConfig,
+        s3Config,
+        redisConfig,
+        cacheConfig,
+        queueConfig,
+      ],
       envFilePath: ['.env'],
     }),
     AuthModule,

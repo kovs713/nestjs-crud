@@ -1,8 +1,8 @@
-import { usersEntity, usersRole } from '../entities';
+import { users, usersRole } from '../entities';
 
-export type RawUser = typeof usersEntity.$inferSelect;
+export type RawUser = typeof users.$inferSelect;
 
-export type InsertUser = typeof usersEntity.$inferInsert;
+export type InsertUser = typeof users.$inferInsert;
 
 export type UpdateUser = Partial<Omit<InsertUser, 'createdAt'>>;
 
