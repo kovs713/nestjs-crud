@@ -4,8 +4,8 @@ import { UserResponseDto } from '@/features/users/dto';
 
 export class AuthTokensDto {
   @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
-  accessToken: string;
+  readonly accessToken: string;
 
   @ApiProperty({ type: UserResponseDto })
-  user: UserResponseDto;
+  readonly user: UserResponseDto;
 }

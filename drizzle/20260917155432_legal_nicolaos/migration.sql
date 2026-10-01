@@ -1,0 +1,1 @@
+CREATE INDEX "users_active_idx" ON "users" ("age") WHERE "deleted_at" IS NULL AND "avatars_count" > 2 AND "description" IS NOT NULL AND "description" <> '';

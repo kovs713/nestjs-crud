@@ -13,36 +13,27 @@
     "target": "ES2023",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "rootDir": ".",
+    "types": ["node", "jest"],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@/auth/*": [
-        "./src/auth/*"
-      ],
-      "@/common/*": [
-        "./src/common/*"
-      ],
-      "@/config/*": [
-        "./src/config/*"
-      ],
-      "@/features/*": [
-        "./src/features/*"
-      ],
-      "@/providers/*": [
-        "./src/providers/*"
-      ],
-      "@/test/*": [
-        "./test/*"
-      ]
+      "*": ["./*"],
+      "@/*": ["./src/*"],
+      "@/auth/*": ["./src/auth/*"],
+      "@/common/*": ["./src/common/*"],
+      "@/config/*": ["./src/config/*"],
+      "@/features/*": ["./src/features/*"],
+      "@/providers/*": ["./src/providers/*"],
+      "@/test/*": ["./test/*"]
     },
-    "incremental": true,
+    "incremental": false,
     "skipLibCheck": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
+    "strictPropertyInitialization": false,
     "noFallthroughCasesInSwitch": false
-  }
+  },
+  "include": ["src/**/*", "test/**/*", "jest.config.ts", "drizzle.config.ts"],
+  "exclude": ["node_modules", "dist"]
 }

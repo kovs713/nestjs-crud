@@ -1,17 +1,17 @@
-import { RequestWithUser } from '@/common/types';
 import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
 } from '@nestjs/common';
 
-import { RawUser } from '../types/users.types';
+import type { JwtPayloadType } from '@/auth/types';
+import type { RequestWithUser } from '@/common/types';
 
 export class SelfOrAdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const request: RequestWithUser<RawUser> = context
+    const request = context
       .switchToHttp()
-      .getRequest();
+      .getRequest<RequestWithUser<JwtPayloadType>>();
     const actor = request.user;
     const id = request.params.id;
     if (actor.id !== id && actor.role !== 'admin') {

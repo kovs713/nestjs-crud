@@ -17,7 +17,7 @@ export class SearchUsersDto {
   @IsOptional()
   @IsString()
   @MaxLength(30)
-  login?: string;
+  readonly login?: string;
 
   @ApiPropertyOptional({
     description: 'Page size (1-100)',
@@ -29,7 +29,7 @@ export class SearchUsersDto {
   @IsInt()
   @Min(1)
   @Max(100)
-  limit: number = 20;
+  readonly limit: number = 20;
 
   @ApiPropertyOptional({
     description: 'Number of users to skip',
@@ -39,5 +39,5 @@ export class SearchUsersDto {
   @IsOptional()
   @IsInt()
   @Min(0)
-  offset: number = 0;
+  readonly offset: number = 0;
 }

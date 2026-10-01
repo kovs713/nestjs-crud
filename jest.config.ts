@@ -1,6 +1,7 @@
 export default {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: '.',
+  roots: ['<rootDir>/src/', '<rootDir>/test/'],
   testRegex: '.*\\.spec\\.ts$',
   transform: { '^.+\\.(t|j)s$': 'ts-jest' },
   testEnvironment: 'node',
@@ -10,4 +11,7 @@ export default {
   collectCoverageFrom: ['**/*.(t|j)s'],
   coverageDirectory: './coverage',
   testPathIgnorePatterns: ['/node_modules/', '\\.integration\\.spec\\.ts$'],
+  transformIgnorePatterns: [
+    'node_modules/(?!\\.pnpm|@nestjs/bullmq|@nestjs/bull-shared|bullmq)',
+  ],
 };

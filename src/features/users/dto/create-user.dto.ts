@@ -20,26 +20,26 @@ export class CreateUserDto implements Omit<
   @ApiProperty({ example: 'john_doe', minLength: 6, maxLength: 30 })
   @IsString()
   @Length(6, 30)
-  login: string;
+  readonly login: string;
 
   @ApiProperty({ example: 's3cr3t-p4ssword', minLength: 8 })
   @IsString()
   @MinLength(8)
-  password: string;
+  readonly password: string;
 
   @ApiProperty({ enum: usersRole.enumValues, default: 'user' })
   @IsIn(usersRole.enumValues)
-  role: UserRole;
+  readonly role: UserRole;
 
   @ApiPropertyOptional({ example: 'john@example.com', nullable: true })
   @IsOptional()
   @IsEmail()
-  email?: string;
+  readonly email?: string;
 
   @ApiPropertyOptional({ example: 25, nullable: true })
   @IsOptional()
   @IsInt()
-  age?: number;
+  readonly age?: number;
 
   @ApiPropertyOptional({
     example: 'Backend developer from Prague',
@@ -49,5 +49,5 @@ export class CreateUserDto implements Omit<
   @IsOptional()
   @IsString()
   @MaxLength(1000)
-  description?: string;
+  readonly description?: string;
 }
